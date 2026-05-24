@@ -152,7 +152,9 @@
         const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ✅ ИСПРАВЛЕНО: убираем 'const' или 'let', используем уже существующую переменную
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         let telegramUser = null;
         let currentUser = null;
 
@@ -167,7 +169,6 @@
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
             } else {
-                // Для тестирования вне Telegram
                 console.log("Работаем вне Telegram (для теста)");
                 telegramUser = { id: 123456789, first_name: "Тестовый" };
                 document.getElementById('telegramId').innerText = 'ID: 123456789 (тест)';
