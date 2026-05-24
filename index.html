@@ -306,6 +306,10 @@
             color: var(--text-rank);
         }
         
+        .rank-dot {
+            color: var(--text-rank);
+        }
+        
         /* Тёмная тема — специфические правки */
         body.dark .info-note {
             background: #3A3A4A;
@@ -382,7 +386,7 @@
                 <h1 id="userName">Загрузка...</h1>
                 <div>
                     <span class="user-id" id="userPublicId"></span>
-                    <span class="participations" id="participationsCount">📊 Участий: --</span>
+                    <span class="participations" id="participationsCount">📊 Event: --</span>
                 </div>
             </div>
             <div class="rating-box">
@@ -467,11 +471,12 @@
                 } else {
                     // Обновляем локальную переменную
                     currentUser.theme = newTheme;
+                    console.log('Тема сохранена в БД:', newTheme);
                 }
+            } else {
+                // Сохраняем в localStorage для гостей
+                localStorage.setItem('theme', newTheme);
             }
-            
-            // Сохраняем в localStorage для гостей
-            localStorage.setItem('theme', newTheme);
         }
         
         // Функция загрузки сохранённой темы
@@ -481,9 +486,11 @@
             // Если пользователь авторизован, берём тему из базы
             if (currentUser && currentUser.theme) {
                 theme = currentUser.theme;
+                console.log('Тема из БД:', theme);
             } else {
                 // Иначе из localStorage
                 theme = localStorage.getItem('theme');
+                console.log('Тема из localStorage:', theme);
             }
             
             if (theme === 'dark') {
@@ -626,7 +633,7 @@
 
                 if (!resultsError && results) {
                     const participationsCount = results.length;
-                    document.getElementById('participationsCount').innerHTML = `📊 Участий: ${participationsCount}`;
+                    document.getElementById('participationsCount').innerHTML = `📊 Event: ${participationsCount}`;
                     
                     if (results.length === 0) {
                         document.getElementById('resultsList').innerHTML = '<div class="info-note">📭 Пока нет результатов. Участвуйте в олимпиадах!</div>';
@@ -687,12 +694,15 @@
                     }).sort((a, b) => b.score - a.score);
                     
                     const topList = ranking.slice(0, 10);
-                    const topHtml = topList.map((u, idx) => `
-                        <div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}">
-                            <div><span class="rank-number">${idx + 1}</span>. <span style="color: var(--text-primary);">${u.name}</span></div>
-                            <div style="font-weight: bold; color: #DC143C;">${u.score} б</div>
-                        </div>
-                    `).join('');
+                    const topHtml = topList.map((u, idx) => {
+                        const rankText = `${idx + 1}.`;
+                        return `
+                            <div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}">
+                                <div><span class="rank-number">${rankText}</span> <span style="color: var(--text-primary);">${u.name}</span></div>
+                                <div style="font-weight: bold; color: #DC143C;">${u.score} б</div>
+                            </div>
+                        `;
+                    }).join('');
                     
                     document.getElementById('topList').innerHTML = topHtml || '<div class="info-note">Нет данных</div>';
                     
@@ -710,17 +720,17 @@
         function loadDemoData() {
             document.getElementById('ratingValue').innerText = '2450';
             document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
-            document.getElementById('participationsCount').innerHTML = '📊 Участий: 3';
+            document.getElementById('participationsCount').innerHTML = '📊 Event: 3';
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></div><div class="olympiad-place">📋 Участие</div></div>
             `;
             document.getElementById('topList').innerHTML = `
-                <div class="result-item"><div><span class="rank-number">1</span>. <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
-                <div class="result-item"><div><span class="rank-number">2</span>. <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
-                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3</span>. <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
-                <div class="result-item"><div><span class="rank-number">4</span>. <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
+                <div class="result-item"><div><span class="rank-number">1.</span> <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
+                <div class="result-item"><div><span class="rank-number">2.</span> <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
+                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3.</span> <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
+                <div class="result-item"><div><span class="rank-number">4.</span> <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
             `;
         }
 
