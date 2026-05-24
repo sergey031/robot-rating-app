@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Рейтинг робототехников</title>
+    <title>Московская робототехника | Рейтинг</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
             min-height: 100vh;
             padding: 20px;
         }
+        
         .container { max-width: 500px; margin: 0 auto; }
+        
         .card {
             background: white;
             border-radius: 20px;
@@ -21,39 +24,77 @@
             margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        .header { text-align: center; margin-bottom: 20px; }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
         .avatar {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
             font-size: 40px;
+            overflow: hidden;
         }
-        h1 { font-size: 24px; color: #333; margin-bottom: 5px; }
-        .user-id { color: #666; font-size: 12px; margin-top: 5px; }
-        .telegram-id { color: #666; font-size: 14px; }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #1A1A1A;
+            margin-bottom: 5px;
+        }
+        
+        .user-id {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .telegram-id {
+            color: #666;
+            font-size: 12px;
+        }
+        
         .rating-box {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #1A2A6A 0%, #0F1A3A 100%);
             color: white;
             padding: 15px;
             border-radius: 15px;
             text-align: center;
             margin-bottom: 20px;
         }
-        .rating-value { font-size: 48px; font-weight: bold; }
-        .rating-label { font-size: 14px; opacity: 0.9; }
+        
+        .rating-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .rating-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
         .section-title {
             font-size: 18px;
             font-weight: bold;
-            color: #333;
+            color: #1A1A1A;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 2px solid #DC143C;
         }
+        
         .result-item {
             padding: 12px;
             background: #f8f9fa;
@@ -63,12 +104,14 @@
             justify-content: space-between;
             align-items: center;
         }
-        .olympiad-name { font-weight: 500; color: #333; }
-        .olympiad-place { font-weight: bold; color: #667eea; }
+        
+        .olympiad-name { font-weight: 500; color: #1A1A1A; }
+        .olympiad-place { font-weight: bold; color: #DC143C; }
+        
         button {
             width: 100%;
             padding: 14px;
-            background: #667eea;
+            background: #DC143C;
             color: white;
             border: none;
             border-radius: 10px;
@@ -76,7 +119,13 @@
             font-weight: 500;
             cursor: pointer;
             margin-bottom: 10px;
+            transition: background 0.3s;
         }
+        
+        button:hover {
+            background: #B01030;
+        }
+        
         .form-input {
             width: 100%;
             padding: 12px;
@@ -85,15 +134,18 @@
             border-radius: 10px;
             font-size: 16px;
         }
+        
         .form-row {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
+        
         .form-row .form-input {
             margin-bottom: 0;
             flex: 1;
         }
+        
         .info-note {
             background: #fff3cd;
             color: #856404;
@@ -102,10 +154,38 @@
             font-size: 12px;
             text-align: center;
         }
+        
         .loading { text-align: center; padding: 40px; color: white; font-size: 18px; }
         .hidden { display: none; }
         .success { color: green; }
         .error { color: red; }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .channel-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 30px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -118,7 +198,7 @@
     <div id="registrationForm" class="container hidden">
         <div class="card">
             <div class="header">
-                <div class="avatar">📝</div>
+                <div class="avatar" id="regAvatar">🤖</div>
                 <h1>Добро пожаловать!</h1>
                 <div class="telegram-id" id="regTelegramId"></div>
             </div>
@@ -132,13 +212,16 @@
             <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
             <button onclick="registerUser()">📝 Зарегистрироваться</button>
         </div>
+        <div class="footer">
+            <a href="https://t.me/mosrobotics" target="_blank">📢 Наш Telegram-канал</a>
+        </div>
     </div>
 
     <!-- Главное приложение -->
     <div id="mainApp" class="container hidden">
         <div class="card">
             <div class="header">
-                <div class="avatar">🤖</div>
+                <div class="avatar" id="userAvatar">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
                 <div class="user-id" id="userId"></div>
                 <div class="telegram-id" id="telegramId"></div>
@@ -163,6 +246,12 @@
         <div class="card">
             <button onclick="loadData()">🔄 Обновить</button>
         </div>
+        
+        <div class="footer">
+            <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
+                📢 Подписаться на канал Московская робототехника
+            </a>
+        </div>
     </div>
 
     <script>
@@ -170,11 +259,21 @@
         const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
         
-        // Создаём клиент Supabase (без const, чтобы не было конфликта)
+        // Создаём клиент Supabase
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let telegramUser = null;
         let currentUser = null;
+
+        // Функция для установки аватарки
+        function setAvatar(photoUrl, elementId) {
+            const avatarElement = document.getElementById(elementId);
+            if (photoUrl) {
+                avatarElement.innerHTML = `<img src="${photoUrl}" alt="Аватар">`;
+            } else {
+                avatarElement.innerHTML = '🤖';
+            }
+        }
 
         window.onload = async function() {
             // Получаем данные из Telegram
@@ -183,6 +282,12 @@
                 if (telegramUser) {
                     document.getElementById('telegramId').innerText = `Telegram ID: ${telegramUser.id}`;
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram ID:</strong> ${telegramUser.id}<br><span style="font-size:12px;">${telegramUser.first_name || ''} ${telegramUser.last_name || ''}</span>`;
+                    
+                    // Устанавливаем аватарку из Telegram, если есть
+                    if (telegramUser.photo_url) {
+                        setAvatar(telegramUser.photo_url, 'userAvatar');
+                        setAvatar(telegramUser.photo_url, 'regAvatar');
+                    }
                 }
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
@@ -221,7 +326,6 @@
                 currentUser = data;
                 document.getElementById('loadingSpinner').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
-                // Показываем полное имя
                 const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
                 document.getElementById('userName').innerText = fullName;
                 document.getElementById('userId').innerHTML = `ID участника: ${data.id}`;
@@ -280,7 +384,7 @@
             document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
 
             try {
-                // Загружаем результаты пользователя с информацией об олимпиаде
+                // Загружаем результаты пользователя
                 const { data: results, error: resultsError } = await supabase
                     .from('results')
                     .select(`
@@ -323,11 +427,9 @@
                         document.getElementById('resultsList').innerHTML = resultsHtml;
                         document.getElementById('ratingValue').innerText = totalPoints;
                     }
-                } else if (resultsError) {
-                    console.error('Ошибка загрузки результатов:', resultsError);
                 }
 
-                // Загружаем общий рейтинг (все пользователи с суммой баллов)
+                // Загружаем общий рейтинг
                 const { data: allUsers, error: usersError } = await supabase
                     .from('users')
                     .select('id, last_name, first_name, patronymic');
@@ -355,7 +457,7 @@
                     const topHtml = topList.map((u, idx) => `
                         <div class="result-item" style="${u.id === currentUser?.id ? 'background: #e8eaf6;' : ''}">
                             <div><span style="font-weight: bold;">${idx + 1}</span>. ${u.name}</div>
-                            <div style="font-weight: bold; color: #667eea;">${u.score} баллов</div>
+                            <div style="font-weight: bold; color: #DC143C;">${u.score} баллов</div>
                         </div>
                     `).join('');
                     
@@ -365,8 +467,6 @@
                     if (userRank > 0) {
                         document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
                     }
-                } else {
-                    console.error('Ошибка загрузки рейтинга:', usersError || resultsAllError);
                 }
             } catch (err) {
                 console.error('Ошибка:', err);
