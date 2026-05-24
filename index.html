@@ -34,6 +34,7 @@
             font-size: 40px;
         }
         h1 { font-size: 24px; color: #333; margin-bottom: 5px; }
+        .user-id { color: #666; font-size: 12px; margin-top: 5px; }
         .telegram-id { color: #666; font-size: 14px; }
         .rating-box {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -84,6 +85,15 @@
             border-radius: 10px;
             font-size: 16px;
         }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .form-row .form-input {
+            margin-bottom: 0;
+            flex: 1;
+        }
         .info-note {
             background: #fff3cd;
             color: #856404;
@@ -99,11 +109,12 @@
     </style>
 </head>
 <body>
-    <!-- Подключение Telegram Web App (ОБЯЗАТЕЛЬНО) -->
+    <!-- Подключение Telegram Web App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
     
+    <!-- Форма регистрации -->
     <div id="registrationForm" class="container hidden">
         <div class="card">
             <div class="header">
@@ -112,17 +123,24 @@
                 <div class="telegram-id" id="regTelegramId"></div>
             </div>
             <p style="margin-bottom: 15px; color: #666;">Заполните данные для участия в рейтинге:</p>
-            <input type="text" id="fullName" class="form-input" placeholder="Ваше полное имя (например, Иванов Иван)">
+            
+            <div class="form-row">
+                <input type="text" id="lastName" class="form-input" placeholder="Фамилия">
+                <input type="text" id="firstName" class="form-input" placeholder="Имя">
+            </div>
+            <input type="text" id="patronymic" class="form-input" placeholder="Отчество (необязательно)">
             <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
             <button onclick="registerUser()">📝 Зарегистрироваться</button>
         </div>
     </div>
 
+    <!-- Главное приложение -->
     <div id="mainApp" class="container hidden">
         <div class="card">
             <div class="header">
                 <div class="avatar">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
+                <div class="user-id" id="userId"></div>
                 <div class="telegram-id" id="telegramId"></div>
             </div>
             <div class="rating-box">
@@ -152,7 +170,7 @@
         const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
         
-        // ✅ ИСПРАВЛЕНО: убираем 'const' или 'let', используем уже существующую переменную
+        // Создаём клиент Supabase (без const, чтобы не было конфликта)
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let telegramUser = null;
@@ -163,15 +181,16 @@
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
                 if (telegramUser) {
-                    document.getElementById('telegramId').innerText = `ID: ${telegramUser.id}`;
+                    document.getElementById('telegramId').innerText = `Telegram ID: ${telegramUser.id}`;
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram ID:</strong> ${telegramUser.id}<br><span style="font-size:12px;">${telegramUser.first_name || ''} ${telegramUser.last_name || ''}</span>`;
                 }
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
             } else {
+                // Для тестирования вне Telegram
                 console.log("Работаем вне Telegram (для теста)");
                 telegramUser = { id: 123456789, first_name: "Тестовый" };
-                document.getElementById('telegramId').innerText = 'ID: 123456789 (тест)';
+                document.getElementById('telegramId').innerText = 'Telegram ID: 123456789 (тест)';
             }
             
             await checkUserAndLoad();
@@ -202,7 +221,10 @@
                 currentUser = data;
                 document.getElementById('loadingSpinner').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('userName').innerText = data.full_name;
+                // Показываем полное имя
+                const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
+                document.getElementById('userName').innerText = fullName;
+                document.getElementById('userId').innerHTML = `ID участника: ${data.id}`;
                 loadData();
             } else {
                 document.getElementById('loadingSpinner').classList.add('hidden');
@@ -211,11 +233,13 @@
         }
 
         async function registerUser() {
-            const fullName = document.getElementById('fullName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const patronymic = document.getElementById('patronymic').value.trim();
             const birthDate = document.getElementById('birthDate').value;
 
-            if (!fullName || !birthDate) {
-                alert('Пожалуйста, заполните имя и дату рождения');
+            if (!lastName || !firstName || !birthDate) {
+                alert('Пожалуйста, заполните фамилию, имя и дату рождения');
                 return;
             }
 
@@ -223,7 +247,9 @@
                 .from('users')
                 .insert([{
                     telegram_id: telegramUser.id,
-                    full_name: fullName,
+                    last_name: lastName,
+                    first_name: firstName,
+                    patronymic: patronymic || null,
                     birth_date: birthDate
                 }])
                 .select()
@@ -238,7 +264,9 @@
             currentUser = data;
             document.getElementById('registrationForm').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('userName').innerText = data.full_name;
+            const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
+            document.getElementById('userName').innerText = fullName;
+            document.getElementById('userId').innerHTML = `ID участника: ${data.id}`;
             loadData();
         }
 
@@ -252,11 +280,18 @@
             document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
 
             try {
-                // Загружаем результаты пользователя
+                // Загружаем результаты пользователя с информацией об олимпиаде
                 const { data: results, error: resultsError } = await supabase
                     .from('results')
-                    .select('*, olympiads(name, date)')
-                    .eq('user_id', currentUser.id);
+                    .select(`
+                        id,
+                        place,
+                        points,
+                        awarded_at,
+                        olympiads (name, year)
+                    `)
+                    .eq('user_id', currentUser.id)
+                    .order('awarded_at', { ascending: false });
 
                 if (!resultsError && results) {
                     if (results.length === 0) {
@@ -267,15 +302,17 @@
                         const resultsHtml = results.map(r => {
                             totalPoints += r.points;
                             let placeText = '';
-                            if (r.place === 1) placeText = '🥇 1 место';
-                            else if (r.place === 2) placeText = '🥈 2 место';
-                            else if (r.place === 3) placeText = '🥉 3 место';
-                            else placeText = r.place ? `${r.place} место` : '📋 Участие';
+                            if (r.place === '1') placeText = '🥇 1 место';
+                            else if (r.place === '2') placeText = '🥈 2 место';
+                            else if (r.place === '3') placeText = '🥉 3 место';
+                            else placeText = '📋 Участие';
+                            
+                            const olympiadName = r.olympiads ? `${r.olympiads.name} (${r.olympiads.year})` : 'Олимпиада';
                             
                             return `
                                 <div class="result-item">
                                     <div>
-                                        <div class="olympiad-name">${r.olympiads?.name || 'Олимпиада'}</div>
+                                        <div class="olympiad-name">${olympiadName}</div>
                                         <div style="font-size: 12px; color: #666;">${r.points} баллов</div>
                                     </div>
                                     <div class="olympiad-place">${placeText}</div>
@@ -286,12 +323,14 @@
                         document.getElementById('resultsList').innerHTML = resultsHtml;
                         document.getElementById('ratingValue').innerText = totalPoints;
                     }
+                } else if (resultsError) {
+                    console.error('Ошибка загрузки результатов:', resultsError);
                 }
 
-                // Загружаем общий рейтинг
+                // Загружаем общий рейтинг (все пользователи с суммой баллов)
                 const { data: allUsers, error: usersError } = await supabase
                     .from('users')
-                    .select('id, full_name');
+                    .select('id, last_name, first_name, patronymic');
 
                 const { data: allResults, error: resultsAllError } = await supabase
                     .from('results')
@@ -303,11 +342,14 @@
                         userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points;
                     });
                     
-                    const ranking = allUsers.map(u => ({
-                        name: u.full_name,
-                        score: userScores[u.id] || 0,
-                        id: u.id
-                    })).sort((a, b) => b.score - a.score);
+                    const ranking = allUsers.map(u => {
+                        const fullName = `${u.last_name} ${u.first_name} ${u.patronymic || ''}`.trim();
+                        return {
+                            name: fullName,
+                            score: userScores[u.id] || 0,
+                            id: u.id
+                        };
+                    }).sort((a, b) => b.score - a.score);
                     
                     const topList = ranking.slice(0, 10);
                     const topHtml = topList.map((u, idx) => `
@@ -323,6 +365,8 @@
                     if (userRank > 0) {
                         document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
                     }
+                } else {
+                    console.error('Ошибка загрузки рейтинга:', usersError || resultsAllError);
                 }
             } catch (err) {
                 console.error('Ошибка:', err);
@@ -334,7 +378,7 @@
             document.getElementById('ratingValue').innerText = '2450';
             document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
             document.getElementById('resultsList').innerHTML = `
-                <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике</div><div style="font-size:12px;">100 баллов</div></div><div class="olympiad-place">🥇 1 место</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 баллов</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 баллов</div></div><div class="olympiad-place">🥈 2 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 баллов</div></div><div class="olympiad-place">📋 Участие</div></div>
             `;
