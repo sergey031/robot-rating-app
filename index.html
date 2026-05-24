@@ -54,7 +54,6 @@
         
         .container { max-width: 500px; margin: 0 auto; position: relative; }
         
-        /* Переключатель темы */
         .theme-switch {
             position: absolute;
             top: 0;
@@ -122,10 +121,17 @@
             margin-bottom: 5px;
         }
         
+        .user-stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
         .user-id {
             color: var(--text-secondary);
             font-size: 12px;
-            margin-top: 5px;
             font-family: monospace;
             background: var(--result-bg);
             display: inline-block;
@@ -133,15 +139,22 @@
             border-radius: 12px;
         }
         
-        .participations {
+        .experience {
             color: var(--text-secondary);
             font-size: 12px;
-            margin-top: 5px;
             display: inline-block;
             padding: 4px 8px;
             border-radius: 12px;
             background: linear-gradient(135deg, #DC143C20, #8B000020);
-            margin-left: 8px;
+        }
+        
+        .participations {
+            color: var(--text-secondary);
+            font-size: 12px;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #DC143C20, #8B000020);
         }
         
         .rating-box {
@@ -219,6 +232,32 @@
             flex: 1;
         }
         
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label a {
+            color: #DC143C;
+            text-decoration: none;
+        }
+        
+        .checkbox-label a:hover {
+            text-decoration: underline;
+        }
+        
         .refresh-btn {
             background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
             color: white;
@@ -245,6 +284,12 @@
         
         .refresh-btn:active {
             transform: scale(0.98);
+        }
+        
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
         }
         
         .info-note {
@@ -306,7 +351,6 @@
             color: var(--text-rank);
         }
         
-        /* Тёмная тема — специфические правки */
         body.dark .info-note {
             background: #3A3A4A;
             color: #FFD700;
@@ -332,13 +376,16 @@
             color: white;
         }
         
+        body.dark .experience {
+            background: #DC143C30;
+        }
+        
         body.dark .participations {
             background: #DC143C30;
         }
     </style>
 </head>
 <body>
-    <!-- Подключение Telegram Web App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
@@ -362,7 +409,14 @@
             </div>
             <input type="text" id="patronymic" class="form-input" placeholder="Отчество (необязательно)">
             <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
-            <button class="refresh-btn" onclick="registerUser()">📝 Зарегистрироваться</button>
+            <input type="date" id="startDate" class="form-input" placeholder="Дата начала занятий робототехникой">
+            
+            <label class="checkbox-label">
+                <input type="checkbox" id="consentCheckbox">
+                <span>Я соглашаюсь на <a href="#" id="consentLink">обработку персональных данных</a> и публикацию моих результатов в рейтинге</span>
+            </label>
+            
+            <button class="refresh-btn" id="registerBtn" onclick="registerUser()">📝 Зарегистрироваться</button>
         </div>
         <div class="footer">
             <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
@@ -380,8 +434,9 @@
             <div class="header">
                 <div class="avatar" id="userAvatar">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
-                <div>
+                <div class="user-stats">
                     <span class="user-id" id="userPublicId"></span>
+                    <span class="experience" id="userExperience"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
                 </div>
             </div>
@@ -416,17 +471,14 @@
     </div>
 
     <script>
-        // Конфигурация Supabase
         const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
         
-        // Создаём клиент Supabase
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let telegramUser = null;
         let currentUser = null;
 
-        // Функция для установки аватарки
         function setAvatar(photoUrl, elementId) {
             const avatarElement = document.getElementById(elementId);
             if (photoUrl) {
@@ -436,7 +488,6 @@
             }
         }
         
-        // Функция применения темы к странице
         function applyTheme(theme) {
             const body = document.body;
             const themeBtnReg = document.getElementById('themeBtnReg');
@@ -453,110 +504,54 @@
             }
         }
         
-        // Функция показа сообщения (визуальная отладка)
-        function showDebugMessage(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.left = '10px';
-            toast.style.right = '10px';
-            toast.style.backgroundColor = isError ? '#DC143C' : '#1A2A6A';
-            toast.style.color = 'white';
-            toast.style.padding = '12px';
-            toast.style.borderRadius = '10px';
-            toast.style.fontSize = '14px';
-            toast.style.zIndex = '9999';
-            toast.style.textAlign = 'center';
-            toast.style.fontWeight = 'bold';
-            toast.innerText = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
-        
-        // Функция переключения темы
         async function toggleTheme() {
-            showDebugMessage('🖱️ Кнопка нажата!');
-            
             const isDark = document.body.classList.contains('dark');
             const newTheme = isDark ? 'light' : 'dark';
-            
-            showDebugMessage(`🔄 Переключаю на ${newTheme === 'dark' ? 'тёмную' : 'светлую'} тему...`);
-            
-            // Применяем тему визуально
             applyTheme(newTheme);
             
-            // Проверяем, авторизован ли пользователь
-            if (!currentUser || !currentUser.id) {
-                showDebugMessage(`⚠️ Пользователь не найден, сохраняю в localStorage только`, true);
+            if (currentUser && currentUser.id) {
+                await supabase.from('users').update({ theme: newTheme }).eq('id', currentUser.id);
+                currentUser.theme = newTheme;
+            } else {
                 localStorage.setItem('theme', newTheme);
-                return;
-            }
-            
-            showDebugMessage(`💾 Сохраняю тему "${newTheme}" для пользователя ${currentUser.id}...`);
-            
-            try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .update({ theme: newTheme })
-                    .eq('id', currentUser.id)
-                    .select();
-                
-                if (error) {
-                    showDebugMessage(`❌ ОШИБКА: ${error.message}`, true);
-                    console.error('Ошибка Supabase:', error);
-                } else {
-                    showDebugMessage(`✅ ТЕМА СОХРАНЕНА! Теперь: ${newTheme}`, false);
-                    currentUser.theme = newTheme;
-                }
-            } catch (err) {
-                showDebugMessage(`❌ ИСКЛЮЧЕНИЕ: ${err.message}`, true);
-                console.error('Исключение:', err);
             }
         }
         
-        // Функция загрузки сохранённой темы
         async function loadSavedTheme() {
             let theme = null;
-            
             if (currentUser && currentUser.id) {
                 if (currentUser.theme) {
                     theme = currentUser.theme;
-                    showDebugMessage(`📖 Тема из currentUser: ${theme}`);
                 } else {
-                    const { data, error } = await supabase
-                        .from('users')
-                        .select('theme')
-                        .eq('id', currentUser.id)
-                        .single();
-                    
-                    if (!error && data && data.theme) {
-                        theme = data.theme;
-                        currentUser.theme = theme;
-                        showDebugMessage(`📖 Тема из БД: ${theme}`);
-                    }
+                    const { data } = await supabase.from('users').select('theme').eq('id', currentUser.id).single();
+                    if (data && data.theme) theme = data.theme;
                 }
             }
-            
-            if (!theme) {
-                theme = localStorage.getItem('theme');
-                if (theme) showDebugMessage(`📖 Тема из localStorage: ${theme}`);
-            }
-            
-            if (!theme) {
-                theme = 'light';
-                showDebugMessage(`📖 Тема по умолчанию: light`);
-            }
-            
+            if (!theme) theme = localStorage.getItem('theme');
+            if (!theme) theme = 'light';
             applyTheme(theme);
+        }
+        
+        function calculateExperience(startDate) {
+            if (!startDate) return 'Стаж: не указан';
+            const start = new Date(startDate);
+            const now = new Date();
+            let years = now.getFullYear() - start.getFullYear();
+            let months = now.getMonth() - start.getMonth();
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            if (years > 0) return `🤖 Стаж: ${years} ${years === 1 ? 'год' : years < 5 ? 'года' : 'лет'}`;
+            if (months > 0) return `🤖 Стаж: ${months} ${months === 1 ? 'месяц' : 'месяцев'}`;
+            return '🤖 Стаж: менее месяца';
         }
 
         window.onload = async function() {
-            // Получаем данные из Telegram
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
                 if (telegramUser) {
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
-                    
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
                         setAvatar(telegramUser.photo_url, 'regAvatar');
@@ -565,9 +560,13 @@
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
             } else {
-                console.log("Работаем вне Telegram (для теста)");
                 telegramUser = { id: 123456789, first_name: "Тестовый" };
             }
+            
+            document.getElementById('consentLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
+            });
             
             await checkUserAndLoad();
         };
@@ -589,7 +588,6 @@
                 .maybeSingle();
 
             if (error) {
-                console.error('Ошибка:', error);
                 showError('Ошибка подключения к базе данных');
                 return;
             }
@@ -601,6 +599,7 @@
                 const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
                 document.getElementById('userName').innerText = fullName;
                 document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
+                document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
                 await loadSavedTheme();
                 loadData();
             } else {
@@ -615,11 +614,22 @@
             const firstName = document.getElementById('firstName').value.trim();
             const patronymic = document.getElementById('patronymic').value.trim();
             const birthDate = document.getElementById('birthDate').value;
+            const startDate = document.getElementById('startDate').value;
+            const consent = document.getElementById('consentCheckbox').checked;
 
             if (!lastName || !firstName || !birthDate) {
                 alert('Пожалуйста, заполните фамилию, имя и дату рождения');
                 return;
             }
+            
+            if (!consent) {
+                alert('Пожалуйста, подтвердите согласие на обработку персональных данных');
+                return;
+            }
+
+            const registerBtn = document.getElementById('registerBtn');
+            registerBtn.disabled = true;
+            registerBtn.textContent = '⏳ Регистрация...';
 
             const { data, error } = await supabase
                 .from('users')
@@ -629,13 +639,17 @@
                     first_name: firstName,
                     patronymic: patronymic || null,
                     birth_date: birthDate,
+                    start_date: startDate || null,
+                    consent: consent,
                     theme: 'light'
                 }])
                 .select()
                 .single();
 
+            registerBtn.disabled = false;
+            registerBtn.textContent = '📝 Зарегистрироваться';
+
             if (error) {
-                console.error('Ошибка регистрации:', error);
                 alert('Ошибка при регистрации: ' + error.message);
                 return;
             }
@@ -646,6 +660,7 @@
             const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
             document.getElementById('userName').innerText = fullName;
             document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
+            document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
             await loadSavedTheme();
             loadData();
         }
@@ -660,20 +675,13 @@
             document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
 
             try {
-                // Загружаем результаты пользователя
-                const { data: results, error: resultsError } = await supabase
+                const { data: results } = await supabase
                     .from('results')
-                    .select(`
-                        id,
-                        place,
-                        points,
-                        awarded_at,
-                        olympiads (id, name, year, public_id)
-                    `)
+                    .select(`id, place, points, awarded_at, olympiads (id, name, year, public_id)`)
                     .eq('user_id', currentUser.id)
                     .order('awarded_at', { ascending: false });
 
-                if (!resultsError && results) {
+                if (results) {
                     const participationsCount = results.length;
                     document.getElementById('participationsCount').innerHTML = `📊 Event: ${participationsCount}`;
                     
@@ -684,77 +692,40 @@
                         let totalPoints = 0;
                         const resultsHtml = results.map(r => {
                             totalPoints += r.points;
-                            let placeText = '';
-                            if (r.place === '1') placeText = '🥇 1 место';
-                            else if (r.place === '2') placeText = '🥈 2 место';
-                            else if (r.place === '3') placeText = '🥉 3 место';
-                            else placeText = '📋 Участие';
-                            
+                            let placeText = r.place === '1' ? '🥇 1 место' : r.place === '2' ? '🥈 2 место' : r.place === '3' ? '🥉 3 место' : '📋 Участие';
                             const olympiad = r.olympiads;
                             const olympiadName = olympiad ? `${olympiad.name} (${olympiad.year})` : 'Олимпиада';
                             const olympiadPublicId = olympiad?.public_id ? ` ${olympiad.public_id}` : '';
-                            
-                            return `
-                                <div class="result-item">
-                                    <div>
-                                        <div class="olympiad-name">${olympiadName}<span class="olympiad-badge">${olympiadPublicId}</span></div>
-                                        <div style="font-size: 12px;">${r.points} б</div>
-                                    </div>
-                                    <div class="olympiad-place">${placeText}</div>
-                                </div>
-                            `;
+                            return `<div class="result-item"><div><div class="olympiad-name">${olympiadName}<span class="olympiad-badge">${olympiadPublicId}</span></div><div style="font-size: 12px;">${r.points} б</div></div><div class="olympiad-place">${placeText}</div></div>`;
                         }).join('');
-                        
                         document.getElementById('resultsList').innerHTML = resultsHtml;
                         document.getElementById('ratingValue').innerText = totalPoints;
                     }
                 }
 
-                // Загружаем общий рейтинг
-                const { data: allUsers, error: usersError } = await supabase
-                    .from('users')
-                    .select('id, last_name, first_name, patronymic, public_id');
+                const { data: allUsers } = await supabase.from('users').select('id, last_name, first_name, patronymic, public_id');
+                const { data: allResults } = await supabase.from('results').select('user_id, points');
 
-                const { data: allResults, error: resultsAllError } = await supabase
-                    .from('results')
-                    .select('user_id, points');
-
-                if (!usersError && !resultsAllError && allUsers) {
+                if (allUsers && allResults) {
                     const userScores = {};
-                    allResults.forEach(r => {
-                        userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points;
-                    });
+                    allResults.forEach(r => { userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points; });
                     
                     const ranking = allUsers.map(u => {
                         const fullName = `${u.last_name} ${u.first_name} ${u.patronymic || ''}`.trim();
                         const displayName = u.public_id ? `${fullName} (${u.public_id})` : fullName;
-                        return {
-                            name: displayName,
-                            score: userScores[u.id] || 0,
-                            id: u.id
-                        };
+                        return { name: displayName, score: userScores[u.id] || 0, id: u.id };
                     }).sort((a, b) => b.score - a.score);
                     
-                    const topList = ranking.slice(0, 10);
-                    const topHtml = topList.map((u, idx) => {
+                    const topHtml = ranking.slice(0, 10).map((u, idx) => {
                         const rankText = `${idx + 1}.`;
-                        return `
-                            <div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}">
-                                <div><span class="rank-number">${rankText}</span> <span style="color: var(--text-primary);">${u.name}</span></div>
-                                <div style="font-weight: bold; color: #DC143C;">${u.score} б</div>
-                            </div>
-                        `;
+                        return `<div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}"><div><span class="rank-number">${rankText}</span> <span style="color: var(--text-primary);">${u.name}</span></div><div style="font-weight: bold; color: #DC143C;">${u.score} б</div></div>`;
                     }).join('');
                     
                     document.getElementById('topList').innerHTML = topHtml || '<div class="info-note">Нет данных</div>';
-                    
                     const userRank = ranking.findIndex(u => u.id === currentUser?.id) + 1;
-                    if (userRank > 0) {
-                        document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
-                    }
+                    if (userRank > 0) document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
                 }
             } catch (err) {
-                console.error('Ошибка:', err);
                 showError('Не удалось загрузить данные');
             }
         }
@@ -763,6 +734,7 @@
             document.getElementById('ratingValue').innerText = '2450';
             document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
             document.getElementById('participationsCount').innerHTML = '📊 Event: 3';
+            document.getElementById('userExperience').innerHTML = '🤖 Стаж: 3 года';
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
