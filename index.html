@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Рейтинг робототехников</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 40px;
+        }
+        h1 { font-size: 24px; color: #333; margin-bottom: 5px; }
+        .telegram-id { color: #666; font-size: 14px; }
+        .rating-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .rating-value { font-size: 48px; font-weight: bold; }
+        .rating-label { font-size: 14px; opacity: 0.9; }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .result-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .olympiad-name { font-weight: 500; color: #333; }
+        .olympiad-place { font-weight: bold; color: #667eea; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .info-note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .loading { text-align: center; padding: 40px; color: white; font-size: 18px; }
+        .hidden { display: none; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
+
+    <div id="registrationForm" class="container hidden">
+        <div class="card">
+            <div class="header">
+                <div class="avatar">📝</div>
+                <h1>Добро пожаловать!</h1>
+                <div class="telegram-id" id="regTelegramId"></div>
+            </div>
+            <p style="margin-bottom: 15px; color: #666;">Заполните данные для участия в рейтинге:</p>
+            <input type="text" id="fullName" class="form-input" placeholder="Ваше полное имя (например, Иванов Иван)">
+            <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
+            <button onclick="registerUser()">📝 Зарегистрироваться</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="container hidden">
+        <div class="card">
+            <div class="header">
+                <div class="avatar">🤖</div>
+                <h1 id="userName">Загрузка...</h1>
+                <div class="telegram-id" id="telegramId"></div>
+            </div>
+            <div class="rating-box">
+                <div class="rating-value" id="ratingValue">0</div>
+                <div class="rating-label">Текущий рейтинг</div>
+                <div style="margin-top: 10px; font-size: 14px;" id="globalRank">Место: --</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">🏆 Мои результаты</div>
+            <div id="resultsList"></div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📊 Общий рейтинг</div>
+            <div id="topList"></div>
+        </div>
+
+        <div class="card">
+            <button onclick="loadData()">🔄 Обновить</button>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация Supabase
+        const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let telegramUser = null;
+        let currentUser = null;
+
+        window.onload = async function() {
+            // Получаем данные из Telegram
+            if (window.Telegram && window.Telegram.WebApp) {
+                telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+                if (telegramUser) {
+                    document.getElementById('telegramId').innerText = `ID: ${telegramUser.id}`;
+                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram ID:</strong> ${telegramUser.id}<br><span style="font-size:12px;">${telegramUser.first_name || ''} ${telegramUser.last_name || ''}</span>`;
+                }
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            } else {
+                // Для тестирования вне Telegram
+                telegramUser = { id: 123456789, first_name: "Тестовый" };
+                document.getElementById('telegramId').innerText = 'ID: 123456789 (тест)';
+            }
+
+            await checkUserAndLoad();
+        };
+
+        async function checkUserAndLoad() {
+            if (!telegramUser) {
+                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userName').innerText = 'Гость';
+                loadDemoData();
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('telegram_id', telegramUser.id)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Ошибка:', error);
+                showError('Ошибка подключения к базе данных');
+                return;
+            }
+
+            if (data) {
+                currentUser = data;
+                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userName').innerText = data.full_name;
+                loadData();
+            } else {
+                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('registrationForm').classList.remove('hidden');
+            }
+        }
+
+        async function registerUser() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const birthDate = document.getElementById('birthDate').value;
+
+            if (!fullName || !birthDate) {
+                alert('Пожалуйста, заполните имя и дату рождения');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('users')
+                .insert([{
+                    telegram_id: telegramUser.id,
+                    full_name: fullName,
+                    birth_date: birthDate
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Ошибка регистрации:', error);
+                alert('Ошибка при регистрации: ' + error.message);
+                return;
+            }
+
+            currentUser = data;
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userName').innerText = data.full_name;
+            loadData();
+        }
+
+        async function loadData() {
+            if (!currentUser) {
+                loadDemoData();
+                return;
+            }
+
+            document.getElementById('resultsList').innerHTML = '<div class="info-note">📥 Загрузка результатов...</div>';
+            document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
+
+            try {
+                // Загружаем результаты пользователя
+                const { data: results, error: resultsError } = await supabase
+                    .from('results')
+                    .select('*, olympiads(name, date)')
+                    .eq('user_id', currentUser.id);
+
+                if (!resultsError && results) {
+                    if (results.length === 0) {
+                        document.getElementById('resultsList').innerHTML = '<div class="info-note">📭 Пока нет результатов</div>';
+                        document.getElementById('ratingValue').innerText = '0';
+                    } else {
+                        let totalPoints = 0;
+                        const resultsHtml = results.map(r => {
+                            totalPoints += r.points;
+                            const placeText = r.place ? (r.place === 1 ? '🥇 1 место' : r.place === 2 ? '🥈 2 место' : r.place === 3 ? '🥉 3 место' : `${r.place} место`) : '📋 Участие';
+                            return `
+                                <div class="result-item">
+                                    <div>
+                                        <div class="olympiad-name">${r.olympiads?.name || 'Олимпиада'}</div>
+                                        <div style="font-size: 12px; color: #666;">${r.points} баллов</div>
+                                    </div>
+                                    <div class="olympiad-place">${placeText}</div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        document.getElementById('resultsList').innerHTML = resultsHtml;
+                        document.getElementById('ratingValue').innerText = totalPoints;
+                    }
+                }
+
+                // Загружаем общий рейтинг
+                const { data: allUsers, error: usersError } = await supabase
+                    .from('users')
+                    .select('id, full_name');
+
+                const { data: allResults, error: resultsAllError } = await supabase
+                    .from('results')
+                    .select('user_id, points');
+
+                if (!usersError && !resultsAllError && allUsers) {
+                    const userScores = {};
+                    allResults.forEach(r => {
+                        userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points;
+                    });
+
+                    const ranking = allUsers.map(u => ({
+                        name: u.full_name,
+                        score: userScores[u.id] || 0,
+                        id: u.id
+                    })).sort((a, b) => b.score - a.score);
+
+                    const topList = ranking.slice(0, 10);
+                    const topHtml = topList.map((u, idx) => `
+                        <div class="result-item" style="${u.id === currentUser?.id ? 'background: #e8eaf6;' : ''}">
+                            <div><span style="font-weight: bold;">${idx + 1}</span>. ${u.name}</div>
+                            <div style="font-weight: bold; color: #667eea;">${u.score} баллов</div>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('topList').innerHTML = topHtml || '<div class="info-note">Нет данных</div>';
+
+                    const userRank = ranking.findIndex(u => u.id === currentUser?.id) + 1;
+                    if (userRank > 0) {
+                        document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
+                    }
+                }
+            } catch (err) {
+                console.error('Ошибка:', err);
+                showError('Не удалось загрузить данные');
+            }
+        }
+
+        function loadDemoData() {
+            document.getElementById('ratingValue').innerText = '2450';
+            document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
+            document.getElementById('resultsList').innerHTML = `
+                <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике</div><div style="font-size:12px;">100 баллов</div></div><div class="olympiad-place">🥇 1 место</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 баллов</div></div><div class="olympiad-place">🥈 2 место</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 баллов</div></div><div class="olympiad-place">📋 Участие</div></div>
+            `;
+            document.getElementById('topList').innerHTML = `
+                <div class="result-item"><div>1. Алексей С. 🥇</div><div>3150 баллов</div></div>
+                <div class="result-item"><div>2. Мария К. 🥈</div><div>2890 баллов</div></div>
+                <div class="result-item" style="background:#e8eaf6;"><div>3. Вы 🥉</div><div>2450 баллов</div></div>
+                <div class="result-item"><div>4. Дмитрий В.</div><div>2100 баллов</div></div>
+            `;
+        }
+
+        function showError(msg) {
+            document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
+            document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
+        }
+    </script>
+</body>
+</html>

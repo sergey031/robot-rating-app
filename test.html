@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Тест Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        pre { background: white; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔌 Тест подключения к Supabase</h1>
+    <div id="status">⏳ Проверка...</div>
+    <div id="data"></div>
+
+    <script>
+        window.onload = async function() {
+            const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
+
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const statusDiv = document.getElementById('status');
+            const dataDiv = document.getElementById('data');
+
+            try {
+                const { data, error } = await supabase.from('olympiads').select('*');
+
+                if (error) {
+                    statusDiv.innerHTML = `<span class="error">❌ Ошибка: ${error.message}</span>`;
+                    dataDiv.innerHTML = `<pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    statusDiv.innerHTML = '<span class="success">✅ Соединение с базой данных работает!</span>';
+                    dataDiv.innerHTML = `<h3>📊 Данные из таблицы "olympiads":</h3><pre>${JSON.stringify(data, null, 2)}</pre><p>Найдено олимпиад: ${data.length}</p>`;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = `<span class="error">❌ Ошибка: ${err.message}</span>`;
+            }
+        };
+    </script>
+</body>
+</html>
