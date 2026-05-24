@@ -99,8 +99,11 @@
     </style>
 </head>
 <body>
-    <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
+    <!-- Подключение Telegram Web App (ОБЯЗАТЕЛЬНО) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
+    
     <div id="registrationForm" class="container hidden">
         <div class="card">
             <div class="header">
@@ -128,17 +131,17 @@
                 <div style="margin-top: 10px; font-size: 14px;" id="globalRank">Место: --</div>
             </div>
         </div>
-
+        
         <div class="card">
             <div class="section-title">🏆 Мои результаты</div>
             <div id="resultsList"></div>
         </div>
-
+        
         <div class="card">
             <div class="section-title">📊 Общий рейтинг</div>
             <div id="topList"></div>
         </div>
-
+        
         <div class="card">
             <button onclick="loadData()">🔄 Обновить</button>
         </div>
@@ -148,7 +151,7 @@
         // Конфигурация Supabase
         const SUPABASE_URL = 'https://vuqaoimnggjcbjdqkrqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWFvaW1uZ2dqY2JqZHFrcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzA0NDAsImV4cCI6MjA5NTIwNjQ0MH0.nt3BjibiB4ze92obD2VTd2cCxeo0Gtqar_uR-PjVciw';
-
+        
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let telegramUser = null;
         let currentUser = null;
@@ -165,10 +168,11 @@
                 window.Telegram.WebApp.expand();
             } else {
                 // Для тестирования вне Telegram
+                console.log("Работаем вне Telegram (для теста)");
                 telegramUser = { id: 123456789, first_name: "Тестовый" };
                 document.getElementById('telegramId').innerText = 'ID: 123456789 (тест)';
             }
-
+            
             await checkUserAndLoad();
         };
 
@@ -255,13 +259,18 @@
 
                 if (!resultsError && results) {
                     if (results.length === 0) {
-                        document.getElementById('resultsList').innerHTML = '<div class="info-note">📭 Пока нет результатов</div>';
+                        document.getElementById('resultsList').innerHTML = '<div class="info-note">📭 Пока нет результатов. Участвуйте в олимпиадах!</div>';
                         document.getElementById('ratingValue').innerText = '0';
                     } else {
                         let totalPoints = 0;
                         const resultsHtml = results.map(r => {
                             totalPoints += r.points;
-                            const placeText = r.place ? (r.place === 1 ? '🥇 1 место' : r.place === 2 ? '🥈 2 место' : r.place === 3 ? '🥉 3 место' : `${r.place} место`) : '📋 Участие';
+                            let placeText = '';
+                            if (r.place === 1) placeText = '🥇 1 место';
+                            else if (r.place === 2) placeText = '🥈 2 место';
+                            else if (r.place === 3) placeText = '🥉 3 место';
+                            else placeText = r.place ? `${r.place} место` : '📋 Участие';
+                            
                             return `
                                 <div class="result-item">
                                     <div>
@@ -272,7 +281,7 @@
                                 </div>
                             `;
                         }).join('');
-
+                        
                         document.getElementById('resultsList').innerHTML = resultsHtml;
                         document.getElementById('ratingValue').innerText = totalPoints;
                     }
@@ -292,13 +301,13 @@
                     allResults.forEach(r => {
                         userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points;
                     });
-
+                    
                     const ranking = allUsers.map(u => ({
                         name: u.full_name,
                         score: userScores[u.id] || 0,
                         id: u.id
                     })).sort((a, b) => b.score - a.score);
-
+                    
                     const topList = ranking.slice(0, 10);
                     const topHtml = topList.map((u, idx) => `
                         <div class="result-item" style="${u.id === currentUser?.id ? 'background: #e8eaf6;' : ''}">
@@ -306,9 +315,9 @@
                             <div style="font-weight: bold; color: #667eea;">${u.score} баллов</div>
                         </div>
                     `).join('');
-
+                    
                     document.getElementById('topList').innerHTML = topHtml || '<div class="info-note">Нет данных</div>';
-
+                    
                     const userRank = ranking.findIndex(u => u.id === currentUser?.id) + 1;
                     if (userRank > 0) {
                         document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
