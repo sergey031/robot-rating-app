@@ -453,57 +453,76 @@
             }
         }
         
-        // Функция сохранения темы в базу данных
-        async function saveThemeToDatabase(theme) {
-            if (!currentUser || !currentUser.id) {
-                console.log('Пользователь не авторизован, сохраняем в localStorage');
-                localStorage.setItem('theme', theme);
-                return;
-            }
-            
-            console.log('Сохраняем тему в БД:', theme, 'для пользователя:', currentUser.id);
-            
-            const { data, error } = await supabase
-                .from('users')
-                .update({ theme: theme })
-                .eq('id', currentUser.id)
-                .select();
-            
-            if (error) {
-                console.error('Ошибка сохранения темы:', error);
-            } else {
-                console.log('Тема успешно сохранена:', data);
-                // Обновляем локальную переменную
-                currentUser.theme = theme;
-            }
+        // Функция показа сообщения (визуальная отладка)
+        function showDebugMessage(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '10px';
+            toast.style.right = '10px';
+            toast.style.backgroundColor = isError ? '#DC143C' : '#1A2A6A';
+            toast.style.color = 'white';
+            toast.style.padding = '12px';
+            toast.style.borderRadius = '10px';
+            toast.style.fontSize = '14px';
+            toast.style.zIndex = '9999';
+            toast.style.textAlign = 'center';
+            toast.style.fontWeight = 'bold';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
         }
         
         // Функция переключения темы
         async function toggleTheme() {
+            showDebugMessage('🖱️ Кнопка нажата!');
+            
             const isDark = document.body.classList.contains('dark');
             const newTheme = isDark ? 'light' : 'dark';
             
-            console.log('Переключаем тему с', isDark ? 'dark' : 'light', 'на', newTheme);
+            showDebugMessage(`🔄 Переключаю на ${newTheme === 'dark' ? 'тёмную' : 'светлую'} тему...`);
             
             // Применяем тему визуально
             applyTheme(newTheme);
             
-            // Сохраняем в базу данных
-            await saveThemeToDatabase(newTheme);
+            // Проверяем, авторизован ли пользователь
+            if (!currentUser || !currentUser.id) {
+                showDebugMessage(`⚠️ Пользователь не найден, сохраняю в localStorage только`, true);
+                localStorage.setItem('theme', newTheme);
+                return;
+            }
+            
+            showDebugMessage(`💾 Сохраняю тему "${newTheme}" для пользователя ${currentUser.id}...`);
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .update({ theme: newTheme })
+                    .eq('id', currentUser.id)
+                    .select();
+                
+                if (error) {
+                    showDebugMessage(`❌ ОШИБКА: ${error.message}`, true);
+                    console.error('Ошибка Supabase:', error);
+                } else {
+                    showDebugMessage(`✅ ТЕМА СОХРАНЕНА! Теперь: ${newTheme}`, false);
+                    currentUser.theme = newTheme;
+                }
+            } catch (err) {
+                showDebugMessage(`❌ ИСКЛЮЧЕНИЕ: ${err.message}`, true);
+                console.error('Исключение:', err);
+            }
         }
         
         // Функция загрузки сохранённой темы
         async function loadSavedTheme() {
             let theme = null;
             
-            // Если пользователь авторизован, берём тему из базы
             if (currentUser && currentUser.id) {
-                // Проверяем, есть ли тема в currentUser
                 if (currentUser.theme) {
                     theme = currentUser.theme;
-                    console.log('Тема из currentUser:', theme);
+                    showDebugMessage(`📖 Тема из currentUser: ${theme}`);
                 } else {
-                    // Если темы нет, запрашиваем из базы
                     const { data, error } = await supabase
                         .from('users')
                         .select('theme')
@@ -513,23 +532,21 @@
                     if (!error && data && data.theme) {
                         theme = data.theme;
                         currentUser.theme = theme;
-                        console.log('Тема из БД (запрос):', theme);
+                        showDebugMessage(`📖 Тема из БД: ${theme}`);
                     }
                 }
             }
             
-            // Если темы нет нигде, берём из localStorage или ставим 'light'
             if (!theme) {
                 theme = localStorage.getItem('theme');
-                console.log('Тема из localStorage:', theme);
+                if (theme) showDebugMessage(`📖 Тема из localStorage: ${theme}`);
             }
             
             if (!theme) {
                 theme = 'light';
-                console.log('Тема по умолчанию: light');
+                showDebugMessage(`📖 Тема по умолчанию: light`);
             }
             
-            // Применяем тему
             applyTheme(theme);
         }
 
