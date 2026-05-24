@@ -16,6 +16,7 @@
             --text-primary: #1A1A1A;
             --text-secondary: #666;
             --text-inverse: white;
+            --text-rank: #1A1A1A;
             --border-color: #ddd;
             --result-bg: #f8f9fa;
             --rating-bg-start: #1A2A6A;
@@ -33,6 +34,7 @@
             --text-primary: #EEEEEE;
             --text-secondary: #AAAAAA;
             --text-inverse: #1A1A1A;
+            --text-rank: #EEEEEE;
             --border-color: #444;
             --result-bg: #3A3A4A;
             --rating-bg-start: #0F0F1A;
@@ -131,10 +133,15 @@
             border-radius: 12px;
         }
         
-        .telegram-id {
+        .participations {
             color: var(--text-secondary);
             font-size: 12px;
             margin-top: 5px;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #DC143C20, #8B000020);
+            margin-left: 8px;
         }
         
         .rating-box {
@@ -293,6 +300,12 @@
             margin-left: 8px;
         }
         
+        .rank-number {
+            font-weight: bold;
+            margin-right: 5px;
+            color: var(--text-rank);
+        }
+        
         /* Тёмная тема — специфические правки */
         body.dark .info-note {
             background: #3A3A4A;
@@ -319,9 +332,8 @@
             color: white;
         }
         
-        /* Для списка рейтинга в тёмной теме */
-        body.dark .top-user-name {
-            color: var(--text-primary);
+        body.dark .participations {
+            background: #DC143C30;
         }
     </style>
 </head>
@@ -334,7 +346,7 @@
     <!-- Форма регистрации -->
     <div id="registrationForm" class="container hidden">
         <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnReg">🌙</button>
         </div>
         <div class="card">
             <div class="header">
@@ -362,14 +374,16 @@
     <!-- Главное приложение -->
     <div id="mainApp" class="container hidden">
         <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnApp">🌙</button>
         </div>
         <div class="card">
             <div class="header">
                 <div class="avatar" id="userAvatar">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
-                <div class="user-id" id="userPublicId"></div>
-                <div class="telegram-id" id="telegramId"></div>
+                <div>
+                    <span class="user-id" id="userPublicId"></span>
+                    <span class="participations" id="participationsCount">📊 Участий: --</span>
+                </div>
             </div>
             <div class="rating-box">
                 <div class="rating-value" id="ratingValue">0</div>
@@ -427,22 +441,33 @@
             const body = document.body;
             const isDark = body.classList.contains('dark');
             const newTheme = isDark ? 'light' : 'dark';
-            const themeBtn = document.getElementById('themeBtn');
             
             if (isDark) {
                 body.classList.remove('dark');
-                themeBtn.textContent = '🌙';
             } else {
                 body.classList.add('dark');
-                themeBtn.textContent = '☀️';
             }
+            
+            // Обновляем иконки на обеих кнопках
+            const themeBtnReg = document.getElementById('themeBtnReg');
+            const themeBtnApp = document.getElementById('themeBtnApp');
+            const newIcon = !isDark ? '☀️' : '🌙';
+            if (themeBtnReg) themeBtnReg.textContent = newIcon;
+            if (themeBtnApp) themeBtnApp.textContent = newIcon;
             
             // Сохраняем тему в базе данных, если пользователь авторизован
             if (currentUser && currentUser.id) {
-                await supabase
+                const { error } = await supabase
                     .from('users')
                     .update({ theme: newTheme })
                     .eq('id', currentUser.id);
+                
+                if (error) {
+                    console.error('Ошибка сохранения темы:', error);
+                } else {
+                    // Обновляем локальную переменную
+                    currentUser.theme = newTheme;
+                }
             }
             
             // Сохраняем в localStorage для гостей
@@ -451,22 +476,28 @@
         
         // Функция загрузки сохранённой темы
         async function loadSavedTheme() {
+            let theme = null;
+            
             // Если пользователь авторизован, берём тему из базы
             if (currentUser && currentUser.theme) {
-                if (currentUser.theme === 'dark') {
-                    document.body.classList.add('dark');
-                    document.getElementById('themeBtn').textContent = '☀️';
-                } else {
-                    document.body.classList.remove('dark');
-                    document.getElementById('themeBtn').textContent = '🌙';
-                }
+                theme = currentUser.theme;
             } else {
                 // Иначе из localStorage
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme === 'dark') {
-                    document.body.classList.add('dark');
-                    document.getElementById('themeBtn').textContent = '☀️';
-                }
+                theme = localStorage.getItem('theme');
+            }
+            
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+                const themeBtnReg = document.getElementById('themeBtnReg');
+                const themeBtnApp = document.getElementById('themeBtnApp');
+                if (themeBtnReg) themeBtnReg.textContent = '☀️';
+                if (themeBtnApp) themeBtnApp.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark');
+                const themeBtnReg = document.getElementById('themeBtnReg');
+                const themeBtnApp = document.getElementById('themeBtnApp');
+                if (themeBtnReg) themeBtnReg.textContent = '🌙';
+                if (themeBtnApp) themeBtnApp.textContent = '🌙';
             }
         }
 
@@ -475,8 +506,7 @@
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
                 if (telegramUser) {
-                    document.getElementById('telegramId').innerText = `Telegram ID: ${telegramUser.id}`;
-                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram ID:</strong> ${telegramUser.id}<br><span style="font-size:12px;">${telegramUser.first_name || ''} ${telegramUser.last_name || ''}</span>`;
+                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
                     
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
@@ -488,7 +518,6 @@
             } else {
                 console.log("Работаем вне Telegram (для теста)");
                 telegramUser = { id: 123456789, first_name: "Тестовый" };
-                document.getElementById('telegramId').innerText = 'Telegram ID: 123456789 (тест)';
             }
             
             await checkUserAndLoad();
@@ -522,7 +551,7 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
                 document.getElementById('userName').innerText = fullName;
-                document.getElementById('userPublicId').innerHTML = `ID: ${data.public_id || `USR-${data.id}`}`;
+                document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
                 await loadSavedTheme();
                 loadData();
             } else {
@@ -550,7 +579,8 @@
                     last_name: lastName,
                     first_name: firstName,
                     patronymic: patronymic || null,
-                    birth_date: birthDate
+                    birth_date: birthDate,
+                    theme: 'light'
                 }])
                 .select()
                 .single();
@@ -566,7 +596,7 @@
             document.getElementById('mainApp').classList.remove('hidden');
             const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
             document.getElementById('userName').innerText = fullName;
-            document.getElementById('userPublicId').innerHTML = `ID: ${data.public_id || `USR-${data.id}`}`;
+            document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
             await loadSavedTheme();
             loadData();
         }
@@ -581,6 +611,7 @@
             document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
 
             try {
+                // Загружаем результаты пользователя
                 const { data: results, error: resultsError } = await supabase
                     .from('results')
                     .select(`
@@ -594,6 +625,9 @@
                     .order('awarded_at', { ascending: false });
 
                 if (!resultsError && results) {
+                    const participationsCount = results.length;
+                    document.getElementById('participationsCount').innerHTML = `📊 Участий: ${participationsCount}`;
+                    
                     if (results.length === 0) {
                         document.getElementById('resultsList').innerHTML = '<div class="info-note">📭 Пока нет результатов. Участвуйте в олимпиадах!</div>';
                         document.getElementById('ratingValue').innerText = '0';
@@ -615,7 +649,7 @@
                                 <div class="result-item">
                                     <div>
                                         <div class="olympiad-name">${olympiadName}<span class="olympiad-badge">${olympiadPublicId}</span></div>
-                                        <div style="font-size: 12px;">${r.points} баллов</div>
+                                        <div style="font-size: 12px;">${r.points} б</div>
                                     </div>
                                     <div class="olympiad-place">${placeText}</div>
                                 </div>
@@ -627,6 +661,7 @@
                     }
                 }
 
+                // Загружаем общий рейтинг
                 const { data: allUsers, error: usersError } = await supabase
                     .from('users')
                     .select('id, last_name, first_name, patronymic, public_id');
@@ -654,8 +689,8 @@
                     const topList = ranking.slice(0, 10);
                     const topHtml = topList.map((u, idx) => `
                         <div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}">
-                            <div><span style="font-weight: bold;">${idx + 1}</span>. <span style="color: var(--text-primary);">${u.name}</span></div>
-                            <div style="font-weight: bold; color: #DC143C;">${u.score} баллов</div>
+                            <div><span class="rank-number">${idx + 1}</span>. <span style="color: var(--text-primary);">${u.name}</span></div>
+                            <div style="font-weight: bold; color: #DC143C;">${u.score} б</div>
                         </div>
                     `).join('');
                     
@@ -675,16 +710,17 @@
         function loadDemoData() {
             document.getElementById('ratingValue').innerText = '2450';
             document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
+            document.getElementById('participationsCount').innerHTML = '📊 Участий: 3';
             document.getElementById('resultsList').innerHTML = `
-                <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 баллов</div></div><div class="olympiad-place">🥇 1 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 баллов</div></div><div class="olympiad-place">🥈 2 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 баллов</div></div><div class="olympiad-place">📋 Участие</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
+                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></div><div class="olympiad-place">📋 Участие</div></div>
             `;
             document.getElementById('topList').innerHTML = `
-                <div class="result-item"><div><span style="font-weight: bold;">1</span>. <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 баллов</div></div>
-                <div class="result-item"><div><span style="font-weight: bold;">2</span>. <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 баллов</div></div>
-                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span style="font-weight: bold;">3</span>. <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 баллов</div></div>
-                <div class="result-item"><div><span style="font-weight: bold;">4</span>. <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 баллов</div></div>
+                <div class="result-item"><div><span class="rank-number">1</span>. <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
+                <div class="result-item"><div><span class="rank-number">2</span>. <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
+                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3</span>. <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
+                <div class="result-item"><div><span class="rank-number">4</span>. <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
             `;
         }
 
