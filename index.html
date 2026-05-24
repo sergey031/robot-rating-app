@@ -15,6 +15,7 @@
             --card-bg: white;
             --text-primary: #1A1A1A;
             --text-secondary: #666;
+            --text-inverse: white;
             --border-color: #ddd;
             --result-bg: #f8f9fa;
             --rating-bg-start: #1A2A6A;
@@ -31,10 +32,11 @@
             --card-bg: #2D2D3A;
             --text-primary: #EEEEEE;
             --text-secondary: #AAAAAA;
+            --text-inverse: #1A1A1A;
             --border-color: #444;
             --result-bg: #3A3A4A;
-            --rating-bg-start: #1A1A2E;
-            --rating-bg-end: #0F0F1A;
+            --rating-bg-start: #0F0F1A;
+            --rating-bg-end: #1A1A2E;
             --button-bg: #DC143C;
             --button-hover: #E0163E;
             --shadow: 0 10px 40px rgba(0,0,0,0.3);
@@ -45,7 +47,7 @@
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
             padding: 20px;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, color 0.2s ease;
         }
         
         .container { max-width: 500px; margin: 0 auto; position: relative; }
@@ -71,6 +73,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text-primary);
         }
         
         .theme-btn:hover {
@@ -136,7 +139,7 @@
         
         .rating-box {
             background: linear-gradient(135deg, var(--rating-bg-start) 0%, var(--rating-bg-end) 100%);
-            color: white;
+            color: var(--text-inverse);
             padding: 15px;
             border-radius: 15px;
             text-align: center;
@@ -170,10 +173,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background 0.2s ease;
         }
         
-        .olympiad-name { font-weight: 500; color: var(--text-primary); }
-        .olympiad-place { font-weight: bold; color: #DC143C; }
+        .olympiad-name { 
+            font-weight: 500; 
+            color: var(--text-primary);
+        }
+        
+        .olympiad-place { 
+            font-weight: bold; 
+            color: #DC143C;
+        }
+        
+        .result-item div div {
+            color: var(--text-secondary);
+        }
         
         .form-input {
             width: 100%;
@@ -278,6 +293,7 @@
             margin-left: 8px;
         }
         
+        /* Тёмная тема — специфические правки */
         body.dark .info-note {
             background: #3A3A4A;
             color: #FFD700;
@@ -289,6 +305,23 @@
         
         body.dark .form-input::placeholder {
             color: #888;
+        }
+        
+        body.dark .result-item {
+            background: #3A3A4A;
+        }
+        
+        body.dark .result-item div div {
+            color: #CCCCCC;
+        }
+        
+        body.dark .rating-box {
+            color: white;
+        }
+        
+        /* Для списка рейтинга в тёмной теме */
+        body.dark .top-user-name {
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -582,7 +615,7 @@
                                 <div class="result-item">
                                     <div>
                                         <div class="olympiad-name">${olympiadName}<span class="olympiad-badge">${olympiadPublicId}</span></div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${r.points} баллов</div>
+                                        <div style="font-size: 12px;">${r.points} баллов</div>
                                     </div>
                                     <div class="olympiad-place">${placeText}</div>
                                 </div>
@@ -621,7 +654,7 @@
                     const topList = ranking.slice(0, 10);
                     const topHtml = topList.map((u, idx) => `
                         <div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}">
-                            <div><span style="font-weight: bold;">${idx + 1}</span>. ${u.name}</div>
+                            <div><span style="font-weight: bold;">${idx + 1}</span>. <span style="color: var(--text-primary);">${u.name}</span></div>
                             <div style="font-weight: bold; color: #DC143C;">${u.score} баллов</div>
                         </div>
                     `).join('');
@@ -648,10 +681,10 @@
                 <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 баллов</div></div><div class="olympiad-place">📋 Участие</div></div>
             `;
             document.getElementById('topList').innerHTML = `
-                <div class="result-item"><div>1. Алексей С. 🥇</div><div>3150 баллов</div></div>
-                <div class="result-item"><div>2. Мария К. 🥈</div><div>2890 баллов</div></div>
-                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div>3. Вы 🥉</div><div>2450 баллов</div></div>
-                <div class="result-item"><div>4. Дмитрий В.</div><div>2100 баллов</div></div>
+                <div class="result-item"><div><span style="font-weight: bold;">1</span>. <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 баллов</div></div>
+                <div class="result-item"><div><span style="font-weight: bold;">2</span>. <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 баллов</div></div>
+                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span style="font-weight: bold;">3</span>. <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 баллов</div></div>
+                <div class="result-item"><div><span style="font-weight: bold;">4</span>. <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 баллов</div></div>
             `;
         }
 
