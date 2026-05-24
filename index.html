@@ -60,11 +60,17 @@
             color: #666;
             font-size: 12px;
             margin-top: 5px;
+            font-family: monospace;
+            background: #f0f0f0;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
         }
         
         .telegram-id {
             color: #666;
             font-size: 12px;
+            margin-top: 5px;
         }
         
         .rating-box {
@@ -186,6 +192,13 @@
             border-radius: 30px;
             margin-top: 10px;
         }
+        
+        .olympiad-badge {
+            font-size: 10px;
+            color: #888;
+            font-family: monospace;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -223,7 +236,7 @@
             <div class="header">
                 <div class="avatar" id="userAvatar">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
-                <div class="user-id" id="userId"></div>
+                <div class="user-id" id="userPublicId"></div>
                 <div class="telegram-id" id="telegramId"></div>
             </div>
             <div class="rating-box">
@@ -328,7 +341,7 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
                 document.getElementById('userName').innerText = fullName;
-                document.getElementById('userId').innerHTML = `ID участника: ${data.id}`;
+                document.getElementById('userPublicId').innerHTML = `ID: ${data.public_id || `USR-${data.id}`}`;
                 loadData();
             } else {
                 document.getElementById('loadingSpinner').classList.add('hidden');
@@ -370,7 +383,7 @@
             document.getElementById('mainApp').classList.remove('hidden');
             const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
             document.getElementById('userName').innerText = fullName;
-            document.getElementById('userId').innerHTML = `ID участника: ${data.id}`;
+            document.getElementById('userPublicId').innerHTML = `ID: ${data.public_id || `USR-${data.id}`}`;
             loadData();
         }
 
@@ -384,7 +397,7 @@
             document.getElementById('topList').innerHTML = '<div class="info-note">📥 Загрузка рейтинга...</div>';
 
             try {
-                // Загружаем результаты пользователя
+                // Загружаем результаты пользователя с информацией об олимпиаде
                 const { data: results, error: resultsError } = await supabase
                     .from('results')
                     .select(`
@@ -392,7 +405,7 @@
                         place,
                         points,
                         awarded_at,
-                        olympiads (name, year)
+                        olympiads (id, name, year, public_id)
                     `)
                     .eq('user_id', currentUser.id)
                     .order('awarded_at', { ascending: false });
@@ -411,12 +424,14 @@
                             else if (r.place === '3') placeText = '🥉 3 место';
                             else placeText = '📋 Участие';
                             
-                            const olympiadName = r.olympiads ? `${r.olympiads.name} (${r.olympiads.year})` : 'Олимпиада';
+                            const olympiad = r.olympiads;
+                            const olympiadName = olympiad ? `${olympiad.name} (${olympiad.year})` : 'Олимпиада';
+                            const olympiadPublicId = olympiad?.public_id ? ` ${olympiad.public_id}` : '';
                             
                             return `
                                 <div class="result-item">
                                     <div>
-                                        <div class="olympiad-name">${olympiadName}</div>
+                                        <div class="olympiad-name">${olympiadName}<span class="olympiad-badge">${olympiadPublicId}</span></div>
                                         <div style="font-size: 12px; color: #666;">${r.points} баллов</div>
                                     </div>
                                     <div class="olympiad-place">${placeText}</div>
@@ -432,7 +447,7 @@
                 // Загружаем общий рейтинг
                 const { data: allUsers, error: usersError } = await supabase
                     .from('users')
-                    .select('id, last_name, first_name, patronymic');
+                    .select('id, last_name, first_name, patronymic, public_id');
 
                 const { data: allResults, error: resultsAllError } = await supabase
                     .from('results')
@@ -446,8 +461,9 @@
                     
                     const ranking = allUsers.map(u => {
                         const fullName = `${u.last_name} ${u.first_name} ${u.patronymic || ''}`.trim();
+                        const displayName = u.public_id ? `${fullName} (${u.public_id})` : fullName;
                         return {
-                            name: fullName,
+                            name: displayName,
                             score: userScores[u.id] || 0,
                             id: u.id
                         };
