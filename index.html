@@ -865,7 +865,7 @@
                     }
                 }
 
-                const { data: allUsers } = await supabase.from('users').select('id, last_name, first_name, patronymic, public_id');
+                const { data: allUsers } = await supabase.from('users').select('id, last_name, first_name, public_id');
                 const { data: allResults } = await supabase.from('results').select('user_id, points');
 
                 if (allUsers && allResults) {
@@ -873,8 +873,9 @@
                     allResults.forEach(r => { userScores[r.user_id] = (userScores[r.user_id] || 0) + r.points; });
                     
                     const ranking = allUsers.map(u => {
-                        const fullName = `${u.last_name} ${u.first_name} ${u.patronymic || ''}`.trim();
-                        const displayName = u.public_id ? `${fullName} (${u.public_id})` : fullName;
+                        // Только фамилия и имя, без отчества
+                        const shortName = `${u.last_name} ${u.first_name}`.trim();
+                        const displayName = u.public_id ? `${shortName} (${u.public_id})` : shortName;
                         return { name: displayName, score: userScores[u.id] || 0, id: u.id };
                     }).sort((a, b) => b.score - a.score);
                     
@@ -899,21 +900,4 @@
             document.getElementById('userExperience').innerHTML = '🤖 Стаж: 3 года';
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></div><div class="olympiad-place">📋 Участие</div></div>
-            `;
-            document.getElementById('topList').innerHTML = `
-                <div class="result-item"><div><span class="rank-number">1.</span> <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
-                <div class="result-item"><div><span class="rank-number">2.</span> <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
-                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3.</span> <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
-                <div class="result-item"><div><span class="rank-number">4.</span> <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
-            `;
-        }
-
-        function showError(msg) {
-            document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
-            document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
-        }
-    </script>
-</body>
-</html>
+                <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style
