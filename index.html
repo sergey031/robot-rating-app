@@ -646,10 +646,6 @@
             document.getElementById('editPatronymic').value = currentUser.patronymic || '';
             document.getElementById('editBirthDate').value = currentUser.birth_date || '';
             
-            if (currentUser.photo_url) {
-                setAvatar(currentUser.photo_url, 'editAvatar');
-            }
-            
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('editProfileForm').classList.remove('hidden');
             loadSavedTheme();
@@ -704,6 +700,7 @@
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
                 if (telegramUser) {
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
+                    // Подгружаем аватарку из Telegram
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
                         setAvatar(telegramUser.photo_url, 'regAvatar');
@@ -891,4 +888,20 @@
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></
+                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></div><div class="olympiad-place">📋 Участие</div></div>
+            `;
+            document.getElementById('topList').innerHTML = `
+                <div class="result-item"><div><span class="rank-number">1.</span> <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
+                <div class="result-item"><div><span class="rank-number">2.</span> <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
+                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3.</span> <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
+                <div class="result-item"><div><span class="rank-number">4.</span> <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
+            `;
+        }
+
+        function showError(msg) {
+            document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
+            document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
+        }
+    </script>
+</body>
+</html>
