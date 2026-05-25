@@ -249,6 +249,14 @@
             flex: 1;
         }
         
+        .form-label {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            display: block;
+            font-weight: 500;
+        }
+        
         .checkbox-label {
             display: flex;
             align-items: flex-start;
@@ -457,12 +465,15 @@
                 <input type="text" id="firstName" class="form-input" placeholder="Имя">
             </div>
             <input type="text" id="patronymic" class="form-input" placeholder="Отчество (необязательно)">
-            <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
             
-            <div class="warning-note" id="startDateWarning">
-                ⚠️ Внимание: дату начала занятий робототехникой нельзя будет изменить после регистрации!
+            <label class="form-label">📅 Дата рождения</label>
+            <input type="date" id="birthDate" class="form-input">
+            
+            <label class="form-label">🤖 Дата начала занятий робототехникой</label>
+            <div class="warning-note" style="margin-bottom: 8px;">
+                ⚠️ Внимание: эту дату нельзя будет изменить после регистрации!
             </div>
-            <input type="date" id="startDate" class="form-input" placeholder="Дата начала занятий робототехникой">
+            <input type="date" id="startDate" class="form-input">
             
             <label class="checkbox-label">
                 <input type="checkbox" id="consentCheckbox">
@@ -494,7 +505,9 @@
                 <input type="text" id="editFirstName" class="form-input" placeholder="Имя">
             </div>
             <input type="text" id="editPatronymic" class="form-input" placeholder="Отчество">
-            <input type="date" id="editBirthDate" class="form-input" placeholder="Дата рождения">
+            
+            <label class="form-label">📅 Дата рождения</label>
+            <input type="date" id="editBirthDate" class="form-input">
             
             <div class="warning-note">
                 ⚠️ ID участника и дата начала занятий не редактируются
@@ -700,7 +713,6 @@
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
                 if (telegramUser) {
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
-                    // Подгружаем аватарку из Telegram
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
                         setAvatar(telegramUser.photo_url, 'regAvatar');
