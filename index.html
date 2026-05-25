@@ -8,7 +8,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* Светлая тема (по умолчанию) */
         :root {
             --bg-gradient-start: #DC143C;
             --bg-gradient-end: #8B0000;
@@ -26,7 +25,6 @@
             --shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
         
-        /* Тёмная тема */
         body.dark {
             --bg-gradient-start: #1A1A2E;
             --bg-gradient-end: #0F0F1A;
@@ -107,6 +105,7 @@
             margin: 0 auto 15px;
             font-size: 40px;
             overflow: hidden;
+            cursor: pointer;
         }
         
         .avatar img {
@@ -183,6 +182,24 @@
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #DC143C;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #DC143C;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        
+        .edit-btn:hover {
+            background: rgba(220,20,60,0.1);
         }
         
         .result-item {
@@ -258,6 +275,16 @@
             text-decoration: underline;
         }
         
+        .warning-note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
         .refresh-btn {
             background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
             color: white;
@@ -290,6 +317,18 @@
             opacity: 0.5;
             transform: none;
             cursor: not-allowed;
+        }
+        
+        .cancel-btn {
+            background: var(--result-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .cancel-btn:hover {
+            background: var(--border-color);
+            transform: none;
+            box-shadow: none;
         }
         
         .info-note {
@@ -351,6 +390,11 @@
             color: var(--text-rank);
         }
         
+        body.dark .warning-note {
+            background: #3A3A4A;
+            color: #FFD700;
+        }
+        
         body.dark .info-note {
             background: #3A3A4A;
             color: #FFD700;
@@ -383,6 +427,11 @@
         body.dark .participations {
             background: #DC143C30;
         }
+        
+        body.dark .cancel-btn {
+            background: #3A3A4A;
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
@@ -409,6 +458,10 @@
             </div>
             <input type="text" id="patronymic" class="form-input" placeholder="Отчество (необязательно)">
             <input type="date" id="birthDate" class="form-input" placeholder="Дата рождения">
+            
+            <div class="warning-note" id="startDateWarning">
+                ⚠️ Внимание: дату начала занятий робототехникой нельзя будет изменить после регистрации!
+            </div>
             <input type="date" id="startDate" class="form-input" placeholder="Дата начала занятий робототехникой">
             
             <label class="checkbox-label">
@@ -425,6 +478,38 @@
         </div>
     </div>
 
+    <!-- Форма редактирования профиля -->
+    <div id="editProfileForm" class="container hidden">
+        <div class="theme-switch">
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnEdit">🌙</button>
+        </div>
+        <div class="card">
+            <div class="header">
+                <div class="avatar" id="editAvatar">🤖</div>
+                <h1>Редактирование профиля</h1>
+            </div>
+            
+            <div class="form-row">
+                <input type="text" id="editLastName" class="form-input" placeholder="Фамилия">
+                <input type="text" id="editFirstName" class="form-input" placeholder="Имя">
+            </div>
+            <input type="text" id="editPatronymic" class="form-input" placeholder="Отчество">
+            <input type="date" id="editBirthDate" class="form-input" placeholder="Дата рождения">
+            
+            <div class="warning-note">
+                ⚠️ ID участника и дата начала занятий не редактируются
+            </div>
+            
+            <button class="refresh-btn" onclick="saveProfile()">💾 Сохранить изменения</button>
+            <button class="refresh-btn cancel-btn" onclick="closeEditProfile()">❌ Отмена</button>
+        </div>
+        <div class="footer">
+            <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
+                📢 Официальный канал Mosrobotics
+            </a>
+        </div>
+    </div>
+
     <!-- Главное приложение -->
     <div id="mainApp" class="container hidden">
         <div class="theme-switch">
@@ -432,7 +517,7 @@
         </div>
         <div class="card">
             <div class="header">
-                <div class="avatar" id="userAvatar">🤖</div>
+                <div class="avatar" id="userAvatar" onclick="openEditProfile()">🤖</div>
                 <h1 id="userName">Загрузка...</h1>
                 <div class="user-stats">
                     <span class="experience" id="userExperience"></span>
@@ -448,7 +533,10 @@
         </div>
         
         <div class="card">
-            <div class="section-title">🏆 Мои результаты</div>
+            <div class="section-title">
+                🏆 Мои результаты
+                <button class="edit-btn" onclick="openEditProfile()">✏️ Редактировать профиль</button>
+            </div>
             <div id="resultsList"></div>
         </div>
         
@@ -492,15 +580,18 @@
             const body = document.body;
             const themeBtnReg = document.getElementById('themeBtnReg');
             const themeBtnApp = document.getElementById('themeBtnApp');
+            const themeBtnEdit = document.getElementById('themeBtnEdit');
             
             if (theme === 'dark') {
                 body.classList.add('dark');
                 if (themeBtnReg) themeBtnReg.textContent = '☀️';
                 if (themeBtnApp) themeBtnApp.textContent = '☀️';
+                if (themeBtnEdit) themeBtnEdit.textContent = '☀️';
             } else {
                 body.classList.remove('dark');
                 if (themeBtnReg) themeBtnReg.textContent = '🌙';
                 if (themeBtnApp) themeBtnApp.textContent = '🌙';
+                if (themeBtnEdit) themeBtnEdit.textContent = '🌙';
             }
         }
         
@@ -547,6 +638,67 @@
             return '🤖 Стаж: менее месяца';
         }
 
+        function openEditProfile() {
+            if (!currentUser) return;
+            
+            document.getElementById('editLastName').value = currentUser.last_name || '';
+            document.getElementById('editFirstName').value = currentUser.first_name || '';
+            document.getElementById('editPatronymic').value = currentUser.patronymic || '';
+            document.getElementById('editBirthDate').value = currentUser.birth_date || '';
+            
+            if (currentUser.photo_url) {
+                setAvatar(currentUser.photo_url, 'editAvatar');
+            }
+            
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('editProfileForm').classList.remove('hidden');
+            loadSavedTheme();
+        }
+        
+        async function saveProfile() {
+            const lastName = document.getElementById('editLastName').value.trim();
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const patronymic = document.getElementById('editPatronymic').value.trim();
+            const birthDate = document.getElementById('editBirthDate').value;
+            
+            if (!lastName || !firstName || !birthDate) {
+                alert('Пожалуйста, заполните фамилию, имя и дату рождения');
+                return;
+            }
+            
+            const { error } = await supabase
+                .from('users')
+                .update({
+                    last_name: lastName,
+                    first_name: firstName,
+                    patronymic: patronymic || null,
+                    birth_date: birthDate
+                })
+                .eq('id', currentUser.id);
+            
+            if (error) {
+                alert('Ошибка при сохранении: ' + error.message);
+                return;
+            }
+            
+            currentUser.last_name = lastName;
+            currentUser.first_name = firstName;
+            currentUser.patronymic = patronymic;
+            currentUser.birth_date = birthDate;
+            
+            const fullName = `${lastName} ${firstName} ${patronymic || ''}`.trim();
+            document.getElementById('userName').innerText = fullName;
+            
+            closeEditProfile();
+            loadData();
+        }
+        
+        function closeEditProfile() {
+            document.getElementById('editProfileForm').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadSavedTheme();
+        }
+
         window.onload = async function() {
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
@@ -555,6 +707,7 @@
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
                         setAvatar(telegramUser.photo_url, 'regAvatar');
+                        setAvatar(telegramUser.photo_url, 'editAvatar');
                     }
                 }
                 window.Telegram.WebApp.ready();
@@ -738,20 +891,4 @@
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
-                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></div><div class="olympiad-place">📋 Участие</div></div>
-            `;
-            document.getElementById('topList').innerHTML = `
-                <div class="result-item"><div><span class="rank-number">1.</span> <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
-                <div class="result-item"><div><span class="rank-number">2.</span> <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
-                <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3.</span> <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
-                <div class="result-item"><div><span class="rank-number">4.</span> <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
-            `;
-        }
-
-        function showError(msg) {
-            document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
-            document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
-        }
-    </script>
-</body>
-</html>
+                <div class="result-item"><div><div class="olympiad-name">Открытый кубок</div><div style="font-size:12px;">25 б</div></
