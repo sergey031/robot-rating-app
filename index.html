@@ -480,12 +480,21 @@
             color: var(--text-secondary);
             margin-top: 20px;
         }
+        
+        .guest-badge {
+            background: linear-gradient(135deg, #DC143C20, #8B000020);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
     <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
     
-    <!-- Страница авторизации (для браузера) -->
+    <!-- Страница авторизации (только для браузера) -->
     <div id="authPage" class="container hidden">
         <div class="card" style="text-align: center;">
             <div class="avatar" style="margin: 0 auto 20px;">🤖</div>
@@ -502,6 +511,7 @@
                 </script>
             </div>
             <div class="auth-note">
+                <span class="guest-badge" onclick="showGuestMode()">👤 Продолжить как гость (демо-режим)</span><br><br>
                 📱 Также доступно в Telegram:<br>
                 <a href="https://t.me/Mosrobotics_bot" style="color: #DC143C; text-decoration: none;">@Mosrobotics_bot</a>
             </div>
@@ -603,7 +613,7 @@
                     <span class="user-id" id="userPublicId"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
                 </div>
-                <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
+                <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">🚪 Выйти</button>
             </div>
             <div class="rating-box">
                 <div class="rating-value" id="ratingValue">0</div>
@@ -646,6 +656,7 @@
         
         let telegramUser = null;
         let currentUser = null;
+        let isGuestMode = false;
 
         function getSavedTelegramUser() {
             const saved = localStorage.getItem('telegram_user');
@@ -670,7 +681,17 @@
             clearSession();
             telegramUser = null;
             currentUser = null;
+            isGuestMode = false;
             showAuthPage();
+        }
+        
+        function showGuestMode() {
+            isGuestMode = true;
+            telegramUser = null;
+            currentUser = null;
+            showMainApp();
+            document.getElementById('logoutBtn').style.display = 'none';
+            loadDemoData();
         }
         
         function showAuthPage() {
@@ -695,6 +716,11 @@
             document.getElementById('registrationForm').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('editProfileForm').classList.add('hidden');
+            if (!isGuestMode && currentUser) {
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
         }
         
         function setAvatar(photoUrl, elementId) {
@@ -947,10 +973,12 @@
         }
 
         function loadDemoData() {
+            document.getElementById('userName').innerText = 'Гость';
+            document.getElementById('userPublicId').innerHTML = '';
+            document.getElementById('userExperience').innerHTML = '👤 Демо-режим';
+            document.getElementById('participationsCount').innerHTML = '📊 Event: 3';
             document.getElementById('ratingValue').innerText = '2450';
             document.getElementById('globalRank').innerHTML = 'Место: 3 из 42';
-            document.getElementById('participationsCount').innerHTML = '📊 Event: 3';
-            document.getElementById('userExperience').innerHTML = '🤖 Стаж: 3 года';
             document.getElementById('resultsList').innerHTML = `
                 <div class="result-item"><div><div class="olympiad-name">Олимпиада по робототехнике (2025)</div><div style="font-size:12px;">100 б</div></div><div class="olympiad-place">🥇 1 место</div></div>
                 <div class="result-item"><div><div class="olympiad-name">Робофест-2025</div><div style="font-size:12px;">75 б</div></div><div class="olympiad-place">🥈 2 место</div></div>
@@ -976,10 +1004,8 @@
                 alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
             });
             
-            // ПРОВЕРЯЕМ НАЛИЧИЕ TELEGRAM WEBAPP
-            const hasWebApp = window.Telegram && window.Telegram.WebApp;
-            
-            if (hasWebApp) {
+            // ПРОВЕРКА: если есть Telegram WebApp (мини-приложение)
+            if (window.Telegram && window.Telegram.WebApp) {
                 console.log('=== TELEGRAM MINI APP MODE ===');
                 const webApp = window.Telegram.WebApp;
                 
@@ -996,7 +1022,6 @@
                 }
                 
                 if (userData) {
-                    console.log('User data received:', userData);
                     telegramUser = {
                         id: userData.id,
                         first_name: userData.first_name,
@@ -1005,7 +1030,12 @@
                         photo_url: userData.photo_url
                     };
                     
-                    // Проверяем в базе данных
+                    if (telegramUser.photo_url) {
+                        setAvatar(telegramUser.photo_url, 'userAvatar');
+                        setAvatar(telegramUser.photo_url, 'regAvatar');
+                        setAvatar(telegramUser.photo_url, 'editAvatar');
+                    }
+                    
                     const { data: userInDb } = await supabase
                         .from('users')
                         .select('*')
@@ -1026,8 +1056,8 @@
                         loadSavedTheme();
                     }
                 } else {
-                    console.error('No user data after waiting');
-                    document.getElementById('loadingSpinner').innerHTML = '❌ Не удалось получить данные пользователя. Пожалуйста, перезапустите приложение.';
+                    console.error('No user data');
+                    showAuthPage();
                 }
                 
                 webApp.ready();
@@ -1039,6 +1069,12 @@
                 
                 if (savedUser) {
                     telegramUser = savedUser;
+                    if (telegramUser.photo_url) {
+                        setAvatar(telegramUser.photo_url, 'userAvatar');
+                        setAvatar(telegramUser.photo_url, 'regAvatar');
+                        setAvatar(telegramUser.photo_url, 'editAvatar');
+                    }
+                    
                     const { data: userInDb } = await supabase
                         .from('users')
                         .select('*')
