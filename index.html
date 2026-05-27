@@ -52,31 +52,24 @@
         
         .container { max-width: 500px; margin: 0 auto; position: relative; }
         
-        .theme-switch {
-            position: absolute;
-            top: 0;
-            right: 0;
-            z-index: 100;
-        }
-        
         .theme-btn {
             background: var(--card-bg);
             border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 22px;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 14px;
             cursor: pointer;
             box-shadow: var(--shadow);
             transition: transform 0.3s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
             color: var(--text-primary);
         }
         
         .theme-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
         
         .card {
@@ -157,7 +150,7 @@
             background: linear-gradient(135deg, #DC143C20, #8B000020);
         }
         
-        .admin-btn, .back-btn {
+        .admin-btn {
             background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
             color: white;
             border: none;
@@ -170,7 +163,7 @@
             display: inline-block;
         }
         
-        .admin-btn:hover, .back-btn:hover {
+        .admin-btn:hover {
             transform: scale(1.02);
             box-shadow: 0 2px 8px rgba(220,20,60,0.3);
         }
@@ -600,9 +593,6 @@
     
     <!-- Форма регистрации -->
     <div id="registrationForm" class="container hidden">
-        <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnReg">🌙</button>
-        </div>
         <div class="card">
             <div class="header">
                 <div class="avatar" id="regAvatar">🤖</div>
@@ -642,9 +632,6 @@
 
     <!-- Форма редактирования профиля -->
     <div id="editProfileForm" class="container hidden">
-        <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnEdit">🌙</button>
-        </div>
         <div class="card">
             <div class="header">
                 <div class="avatar" id="editAvatar">🤖</div>
@@ -676,10 +663,7 @@
 
     <!-- Главное приложение (рейтинг) -->
     <div id="mainApp" class="container hidden">
-        <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnApp">🌙</button>
-        </div>
-        <div class="mode-switch" id="modeSwitch">
+        <div class="mode-switch">
             <button class="mode-btn active" onclick="switchMode('user')">📊 Рейтинг</button>
             <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')" style="display: none;">🔧 Админ-панель</button>
         </div>
@@ -697,6 +681,7 @@
                 <div class="rating-value" id="ratingValue">0</div>
                 <div class="rating-label">Текущий рейтинг</div>
                 <div style="margin-top: 10px; font-size: 14px;" id="globalRank">Место: --</div>
+                <button class="theme-btn" style="margin-top: 12px; background: rgba(255,255,255,0.2); box-shadow: none; width: auto; padding: 6px 12px; font-size: 14px; border-radius: 30px;" onclick="toggleTheme()" id="themeBtnInline">🌙 Тема</button>
             </div>
         </div>
         
@@ -728,9 +713,6 @@
 
     <!-- ========== РЕЖИМ АДМИНА ========== -->
     <div id="adminPanel" class="container hidden">
-        <div class="theme-switch">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnAdmin">🌙</button>
-        </div>
         <div class="mode-switch">
             <button class="mode-btn" onclick="switchMode('user')">📊 Рейтинг</button>
             <button class="mode-btn active" onclick="switchMode('admin')">🔧 Админ-панель</button>
@@ -828,6 +810,11 @@
                 <div id="statusManual" class="status-message hidden"></div>
             </div>
         </div>
+        <div class="footer">
+            <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
+                📢 Официальный канал Mosrobotics
+            </a>
+        </div>
     </div>
 
     <script>
@@ -851,23 +838,14 @@
         
         function applyTheme(theme) {
             const body = document.body;
-            const themeBtnReg = document.getElementById('themeBtnReg');
-            const themeBtnApp = document.getElementById('themeBtnApp');
-            const themeBtnEdit = document.getElementById('themeBtnEdit');
-            const themeBtnAdmin = document.getElementById('themeBtnAdmin');
+            const themeBtnInline = document.getElementById('themeBtnInline');
             
             if (theme === 'dark') {
                 body.classList.add('dark');
-                if (themeBtnReg) themeBtnReg.textContent = '☀️';
-                if (themeBtnApp) themeBtnApp.textContent = '☀️';
-                if (themeBtnEdit) themeBtnEdit.textContent = '☀️';
-                if (themeBtnAdmin) themeBtnAdmin.textContent = '☀️';
+                if (themeBtnInline) themeBtnInline.textContent = '☀️ Тема';
             } else {
                 body.classList.remove('dark');
-                if (themeBtnReg) themeBtnReg.textContent = '🌙';
-                if (themeBtnApp) themeBtnApp.textContent = '🌙';
-                if (themeBtnEdit) themeBtnEdit.textContent = '🌙';
-                if (themeBtnAdmin) themeBtnAdmin.textContent = '🌙';
+                if (themeBtnInline) themeBtnInline.textContent = '🌙 Тема';
             }
         }
         
@@ -982,6 +960,7 @@
                 document.getElementById('editProfileForm').classList.add('hidden');
                 userModeBtn.classList.add('active');
                 if (adminModeBtn) adminModeBtn.classList.remove('active');
+                loadData();
             } else if (mode === 'admin') {
                 document.getElementById('mainApp').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
@@ -1307,7 +1286,7 @@
                 if (csvData.length > 5) {
                     previewHtml += `<tr><td colspan="${headers.length}">... и ещё ${csvData.length - 5} записей</td></tr>`;
                 }
-                previewHtml += '</tbody></tr>';
+                previewHtml += '</tbody></table>';
                 
                 document.getElementById('csvPreview').innerHTML = previewHtml;
                 document.getElementById('csvPreview').classList.remove('hidden');
