@@ -398,6 +398,25 @@
             color: var(--text-rank);
         }
         
+        /* Кнопка выхода */
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(220,20,60,0.1);
+            border-color: #DC143C;
+            color: #DC143C;
+        }
+        
         body.dark .warning-note {
             background: #3A3A4A;
             color: #FFD700;
@@ -440,12 +459,61 @@
             background: #3A3A4A;
             color: var(--text-primary);
         }
+        
+        body.dark .logout-btn:hover {
+            background: #DC143C20;
+        }
+        
+        /* Стили для страницы авторизации */
+        .telegram-login {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .auth-title {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+        
+        .auth-note {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
+    
+    <!-- Страница авторизации (для браузера) -->
+    <div id="authPage" class="container hidden">
+        <div class="card" style="text-align: center;">
+            <div class="avatar" style="margin: 0 auto 20px;">🤖</div>
+            <h1>Московская робототехника</h1>
+            <p style="margin: 15px 0; color: var(--text-secondary);">
+                Система рейтинга участников олимпиад по робототехнике
+            </p>
+            <div class="telegram-login">
+                <script async src="https://telegram.org/js/telegram-widget.js?22"
+                    data-telegram-login="Mosrobotics_bot"
+                    data-size="large"
+                    data-auth-url="https://sergey031.github.io/robot-rating-app/auth.html"
+                    data-request-access="write">
+                </script>
+            </div>
+            <div class="auth-note">
+                📱 Также доступно в Telegram:<br>
+                <a href="https://t.me/Mosrobotics_bot" style="color: #DC143C; text-decoration: none;">@Mosrobotics_bot</a>
+            </div>
+        </div>
+        <div class="footer">
+            <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
+                📢 Официальный канал Mosrobotics
+            </a>
+        </div>
+    </div>
     
     <!-- Форма регистрации -->
     <div id="registrationForm" class="container hidden">
@@ -537,6 +605,7 @@
                     <span class="user-id" id="userPublicId"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
                 </div>
+                <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
             </div>
             <div class="rating-box">
                 <div class="rating-value" id="ratingValue">0</div>
@@ -580,6 +649,67 @@
         let telegramUser = null;
         let currentUser = null;
 
+        // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+        
+        function isTelegramWebApp() {
+            return window.Telegram && window.Telegram.WebApp;
+        }
+        
+        function getSavedTelegramUser() {
+            const saved = localStorage.getItem('telegram_user');
+            if (saved) {
+                try {
+                    const user = JSON.parse(saved);
+                    const authDate = localStorage.getItem('telegram_auth_date');
+                    // Проверяем, что авторизация не старше 7 дней
+                    if (authDate && (Date.now() / 1000 - parseInt(authDate) < 7 * 24 * 60 * 60)) {
+                        return user;
+                    }
+                } catch(e) {}
+            }
+            return null;
+        }
+        
+        function clearSession() {
+            localStorage.removeItem('telegram_user');
+            localStorage.removeItem('telegram_auth_date');
+        }
+        
+        function logout() {
+            clearSession();
+            telegramUser = null;
+            currentUser = null;
+            showAuthPage();
+        }
+        
+        // ========== ФУНКЦИИ ОТОБРАЖЕНИЯ СТРАНИЦ ==========
+        
+        function showAuthPage() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('authPage').classList.remove('hidden');
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('editProfileForm').classList.add('hidden');
+        }
+        
+        function showRegistrationForm() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('registrationForm').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('editProfileForm').classList.add('hidden');
+        }
+        
+        function showMainApp() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('editProfileForm').classList.add('hidden');
+        }
+        
+        // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (те же, что были) ==========
+        
         function setAvatar(photoUrl, elementId) {
             const avatarElement = document.getElementById(elementId);
             if (photoUrl) {
@@ -708,69 +838,6 @@
             loadSavedTheme();
         }
 
-        window.onload = async function() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
-                if (telegramUser) {
-                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
-                    if (telegramUser.photo_url) {
-                        setAvatar(telegramUser.photo_url, 'userAvatar');
-                        setAvatar(telegramUser.photo_url, 'regAvatar');
-                        setAvatar(telegramUser.photo_url, 'editAvatar');
-                    }
-                }
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-            } else {
-                telegramUser = { id: 123456789, first_name: "Тестовый" };
-            }
-            
-            document.getElementById('consentLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
-            });
-            
-            await checkUserAndLoad();
-        };
-
-        async function checkUserAndLoad() {
-            if (!telegramUser) {
-                document.getElementById('loadingSpinner').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('userName').innerText = 'Гость';
-                loadDemoData();
-                loadSavedTheme();
-                return;
-            }
-
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('telegram_id', telegramUser.id)
-                .maybeSingle();
-
-            if (error) {
-                showError('Ошибка подключения к базе данных');
-                return;
-            }
-
-            if (data) {
-                currentUser = data;
-                document.getElementById('loadingSpinner').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
-                document.getElementById('userName').innerText = fullName;
-                document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
-                document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
-                await loadSavedTheme();
-                loadData();
-            } else {
-                document.getElementById('loadingSpinner').classList.add('hidden');
-                document.getElementById('registrationForm').classList.remove('hidden');
-                loadSavedTheme();
-            }
-        }
-
         async function registerUser() {
             const lastName = document.getElementById('lastName').value.trim();
             const firstName = document.getElementById('firstName').value.trim();
@@ -817,8 +884,7 @@
             }
 
             currentUser = data;
-            document.getElementById('registrationForm').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+            showMainApp();
             const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
             document.getElementById('userName').innerText = fullName;
             document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
@@ -915,6 +981,92 @@
             document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
         }
+
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        
+        window.onload = async function() {
+            document.getElementById('consentLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
+            });
+            
+            // Проверяем, открыто ли приложение в Telegram Mini App
+            if (isTelegramWebApp()) {
+                // Режим Telegram Mini App
+                const webApp = window.Telegram.WebApp;
+                telegramUser = webApp.initDataUnsafe?.user;
+                
+                if (telegramUser) {
+                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
+                    if (telegramUser.photo_url) {
+                        setAvatar(telegramUser.photo_url, 'userAvatar');
+                        setAvatar(telegramUser.photo_url, 'regAvatar');
+                        setAvatar(telegramUser.photo_url, 'editAvatar');
+                    }
+                    
+                    // Проверяем, зарегистрирован ли пользователь
+                    const { data } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('telegram_id', telegramUser.id)
+                        .maybeSingle();
+                    
+                    if (data) {
+                        currentUser = data;
+                        showMainApp();
+                        const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
+                        document.getElementById('userName').innerText = fullName;
+                        document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
+                        document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
+                        await loadSavedTheme();
+                        loadData();
+                    } else {
+                        showRegistrationForm();
+                        loadSavedTheme();
+                    }
+                } else {
+                    showAuthPage();
+                }
+                
+                webApp.ready();
+                webApp.expand();
+            } else {
+                // Режим обычного браузера
+                const savedUser = getSavedTelegramUser();
+                
+                if (savedUser) {
+                    telegramUser = savedUser;
+                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${savedUser.first_name || ''} ${savedUser.last_name || ''}`;
+                    if (savedUser.photo_url) {
+                        setAvatar(savedUser.photo_url, 'userAvatar');
+                        setAvatar(savedUser.photo_url, 'regAvatar');
+                        setAvatar(savedUser.photo_url, 'editAvatar');
+                    }
+                    
+                    const { data } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('telegram_id', savedUser.id)
+                        .maybeSingle();
+                    
+                    if (data) {
+                        currentUser = data;
+                        showMainApp();
+                        const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
+                        document.getElementById('userName').innerText = fullName;
+                        document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
+                        document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
+                        await loadSavedTheme();
+                        loadData();
+                    } else {
+                        showRegistrationForm();
+                        loadSavedTheme();
+                    }
+                } else {
+                    showAuthPage();
+                }
+            }
+        };
     </script>
 </body>
 </html>
