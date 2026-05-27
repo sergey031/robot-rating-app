@@ -157,7 +157,7 @@
             background: linear-gradient(135deg, #DC143C20, #8B000020);
         }
         
-        .admin-btn {
+        .admin-btn, .back-btn {
             background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
             color: white;
             border: none;
@@ -166,9 +166,11 @@
             font-size: 12px;
             cursor: pointer;
             transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
         
-        .admin-btn:hover {
+        .admin-btn:hover, .back-btn:hover {
             transform: scale(1.02);
             box-shadow: 0 2px 8px rgba(220,20,60,0.3);
         }
@@ -415,90 +417,61 @@
             color: var(--text-rank);
         }
         
-        /* Админ-панель модальное окно */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+        body.dark .warning-note {
+            background: #3A3A4A;
+            color: #FFD700;
         }
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
+        
+        body.dark .info-note {
+            background: #3A3A4A;
+            color: #FFD700;
         }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #DC143C;
+        
+        body.dark .user-id {
+            background: #3A3A4A;
         }
-        .modal-header h2 {
-            color: var(--text-primary);
-            margin: 0;
+        
+        body.dark .form-input::placeholder {
+            color: #888;
         }
-        .modal-close {
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: var(--text-secondary);
-            background: none;
-            border: none;
-            padding: 0 8px;
+        
+        body.dark .result-item {
+            background: #3A3A4A;
         }
-        .modal-close:hover {
-            color: #DC143C;
+        
+        body.dark .result-item div div {
+            color: #CCCCCC;
         }
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .tab-btn {
-            flex: 1;
-            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
+        
+        body.dark .rating-box {
             color: white;
-            border: none;
-            border-radius: 30px;
+        }
+        
+        body.dark .experience {
+            background: #DC143C30;
+        }
+        
+        body.dark .participations {
+            background: #DC143C30;
+        }
+        
+        body.dark .cancel-btn {
+            background: #3A3A4A;
+            color: var(--text-primary);
+        }
+        
+        /* Стили для админ-панели */
+        .admin-warning {
+            background: #fff3cd;
+            color: #856404;
             padding: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            border-radius: 10px;
             text-align: center;
-        }
-        .tab-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(220,20,60,0.4);
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .form-group {
             margin-bottom: 15px;
         }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
+        body.dark .admin-warning {
+            background: #3A3A4A;
+            color: #FFD700;
         }
         .file-zone {
             border: 2px dashed var(--border-color);
@@ -547,23 +520,74 @@
             background: #f8d7da;
             color: #721c24;
         }
-        .admin-warning {
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        body.dark .admin-warning {
-            background: #3A3A4A;
-            color: #FFD700;
-        }
         body.dark .file-zone {
             background: var(--card-bg);
         }
         body.dark .preview-area {
             background: var(--result-bg);
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .tab-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(220,20,60,0.4);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        .mode-switch {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .mode-btn {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid #DC143C;
+            color: #DC143C;
+            border-radius: 30px;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .mode-btn.active {
+            background: #DC143C;
+            color: white;
+        }
+        .mode-btn:hover {
+            transform: scale(1.02);
         }
     </style>
 </head>
@@ -571,6 +595,8 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <div id="loadingSpinner" class="loading">🤖 Загрузка приложения...</div>
+    
+    <!-- ========== РЕЖИМ ПОЛЬЗОВАТЕЛЯ ========== -->
     
     <!-- Форма регистрации -->
     <div id="registrationForm" class="container hidden">
@@ -648,10 +674,14 @@
         </div>
     </div>
 
-    <!-- Главное приложение -->
+    <!-- Главное приложение (рейтинг) -->
     <div id="mainApp" class="container hidden">
         <div class="theme-switch">
             <button class="theme-btn" onclick="toggleTheme()" id="themeBtnApp">🌙</button>
+        </div>
+        <div class="mode-switch" id="modeSwitch">
+            <button class="mode-btn active" onclick="switchMode('user')">📊 Рейтинг</button>
+            <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')" style="display: none;">🔧 Админ-панель</button>
         </div>
         <div class="card">
             <div class="header">
@@ -661,7 +691,6 @@
                     <span class="experience" id="userExperience"></span>
                     <span class="user-id" id="userPublicId"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
-                    <button class="admin-btn" id="adminBtn" onclick="openAdminModal()" style="display: none;">🔧 Админ-панель</button>
                 </div>
             </div>
             <div class="rating-box">
@@ -697,14 +726,16 @@
         </div>
     </div>
 
-    <!-- Админ-панель (модальное окно) -->
-    <div id="adminModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔧 Админ-панель</h2>
-                <button class="modal-close" onclick="closeAdminModal()">&times;</button>
-            </div>
-            
+    <!-- ========== РЕЖИМ АДМИНА ========== -->
+    <div id="adminPanel" class="container hidden">
+        <div class="theme-switch">
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtnAdmin">🌙</button>
+        </div>
+        <div class="mode-switch">
+            <button class="mode-btn" onclick="switchMode('user')">📊 Рейтинг</button>
+            <button class="mode-btn active" onclick="switchMode('admin')">🔧 Админ-панель</button>
+        </div>
+        <div class="card">
             <div class="admin-warning">
                 ⚠️ Управление олимпиадами и результатами участников
             </div>
@@ -823,17 +854,20 @@
             const themeBtnReg = document.getElementById('themeBtnReg');
             const themeBtnApp = document.getElementById('themeBtnApp');
             const themeBtnEdit = document.getElementById('themeBtnEdit');
+            const themeBtnAdmin = document.getElementById('themeBtnAdmin');
             
             if (theme === 'dark') {
                 body.classList.add('dark');
                 if (themeBtnReg) themeBtnReg.textContent = '☀️';
                 if (themeBtnApp) themeBtnApp.textContent = '☀️';
                 if (themeBtnEdit) themeBtnEdit.textContent = '☀️';
+                if (themeBtnAdmin) themeBtnAdmin.textContent = '☀️';
             } else {
                 body.classList.remove('dark');
                 if (themeBtnReg) themeBtnReg.textContent = '🌙';
                 if (themeBtnApp) themeBtnApp.textContent = '🌙';
                 if (themeBtnEdit) themeBtnEdit.textContent = '🌙';
+                if (themeBtnAdmin) themeBtnAdmin.textContent = '🌙';
             }
         }
         
@@ -937,6 +971,28 @@
             loadSavedTheme();
         }
 
+        function switchMode(mode) {
+            const userModeBtn = document.querySelectorAll('.mode-btn')[0];
+            const adminModeBtn = document.getElementById('adminModeBtn');
+            
+            if (mode === 'user') {
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('adminPanel').classList.add('hidden');
+                document.getElementById('registrationForm').classList.add('hidden');
+                document.getElementById('editProfileForm').classList.add('hidden');
+                userModeBtn.classList.add('active');
+                if (adminModeBtn) adminModeBtn.classList.remove('active');
+            } else if (mode === 'admin') {
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.getElementById('registrationForm').classList.add('hidden');
+                document.getElementById('editProfileForm').classList.add('hidden');
+                userModeBtn.classList.remove('active');
+                if (adminModeBtn) adminModeBtn.classList.add('active');
+                loadOlympiadsForSelect();
+            }
+        }
+
         window.onload = async function() {
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
@@ -993,7 +1049,7 @@
                 document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
                 
                 if (data.public_id === 'USR-1') {
-                    document.getElementById('adminBtn').style.display = 'inline-block';
+                    document.getElementById('adminModeBtn').style.display = 'block';
                 }
                 
                 await loadSavedTheme();
@@ -1059,7 +1115,7 @@
             document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
             
             if (data.public_id === 'USR-1') {
-                document.getElementById('adminBtn').style.display = 'inline-block';
+                document.getElementById('adminModeBtn').style.display = 'block';
             }
             
             await loadSavedTheme();
@@ -1155,39 +1211,13 @@
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
         }
 
-        // ========== АДМИН-ПАНЕЛЬ ==========
-        
-        function openAdminModal() {
-            if (!currentUser || currentUser.public_id !== 'USR-1') {
-                showError('Доступ только для администратора');
-                return;
-            }
-            loadOlympiadsForSelect();
-            document.getElementById('adminModal').classList.remove('hidden');
-        }
-        
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.add('hidden');
-            // Очищаем формы
-            const csvPreview = document.getElementById('csvPreview');
-            if (csvPreview) {
-                csvPreview.innerHTML = '';
-                csvPreview.classList.add('hidden');
-            }
-            const csvUploadBtn = document.getElementById('csvUploadBtn');
-            if (csvUploadBtn) csvUploadBtn.disabled = true;
-            const csvFileInput = document.getElementById('csvFileInput');
-            if (csvFileInput) csvFileInput.value = '';
-            csvData = [];
-        }
+        // ========== АДМИН-ПАНЕЛЬ ФУНКЦИИ ==========
         
         function switchTab(tab) {
-            // Скрываем все вкладки
             document.getElementById('tab-olympiad').classList.remove('active');
             document.getElementById('tab-csv').classList.remove('active');
             document.getElementById('tab-manual').classList.remove('active');
             
-            // Показываем выбранную
             if (tab === 'olympiad') {
                 document.getElementById('tab-olympiad').classList.add('active');
             } else if (tab === 'csv') {
@@ -1205,10 +1235,7 @@
                 .select('id, name, year')
                 .order('year', { ascending: false });
             
-            if (error) {
-                console.error('Ошибка загрузки олимпиад:', error);
-                return;
-            }
+            if (error) return;
             
             const csvSelect = document.getElementById('csvOlympiadId');
             const manualSelect = document.getElementById('manualOlympiadId');
@@ -1238,18 +1265,12 @@
                 .insert([{ name, year, points_1st, points_2nd, points_3rd, points_participation }]);
             
             if (error) {
-                console.error('Ошибка Supabase:', error);
                 showAdminStatus('error', 'Ошибка: ' + error.message, 'statusOlympiad');
                 return;
             }
             
             showAdminStatus('success', `✅ Олимпиада "${name}" добавлена!`, 'statusOlympiad');
             document.getElementById('newOlympiadName').value = '';
-            document.getElementById('newOlympiadYear').value = '2026';
-            document.getElementById('newOlympiadPoints1').value = '100';
-            document.getElementById('newOlympiadPoints2').value = '75';
-            document.getElementById('newOlympiadPoints3').value = '50';
-            document.getElementById('newOlympiadPointsPart').value = '25';
             loadOlympiadsForSelect();
         }
         
@@ -1280,13 +1301,13 @@
                 previewHtml += '</tr></thead><tbody>';
                 previewRows.forEach(row => {
                     previewHtml += '<tr>';
-                    headers.forEach(h => previewHtml += `<td>${row[h] || '-'}<tr>`);
+                    headers.forEach(h => previewHtml += `<td>${row[h] || '-'}</td>`);
                     previewHtml += '</tr>';
                 });
                 if (csvData.length > 5) {
                     previewHtml += `<tr><td colspan="${headers.length}">... и ещё ${csvData.length - 5} записей</td></tr>`;
                 }
-                previewHtml += '</tbody></table>';
+                previewHtml += '</tbody></tr>';
                 
                 document.getElementById('csvPreview').innerHTML = previewHtml;
                 document.getElementById('csvPreview').classList.remove('hidden');
