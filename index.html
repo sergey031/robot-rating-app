@@ -6,7 +6,6 @@
     <title>Московская робототехника | Рейтинг</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Все твои стили остаются без изменений */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
@@ -648,8 +647,14 @@
         let telegramUser = null;
         let currentUser = null;
 
-        function isTelegramWebApp() {
-            return window.Telegram && window.Telegram.WebApp;
+        function isTelegramMiniApp() {
+            // Проверяем наличие Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                return true;
+            }
+            // Проверяем User Agent
+            const ua = navigator.userAgent.toLowerCase();
+            return ua.includes('telegram');
         }
         
         function getSavedTelegramUser() {
@@ -974,41 +979,49 @@
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
         }
 
-        // ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
         window.onload = async function() {
             document.getElementById('consentLink').addEventListener('click', (e) => {
                 e.preventDefault();
                 alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
             });
             
-            if (isTelegramWebApp()) {
-                // Режим Telegram Mini App — ждём данные пользователя
-                const webApp = window.Telegram.WebApp;
+            const isMiniApp = isTelegramMiniApp();
+            console.log('isMiniApp:', isMiniApp);
+            
+            if (isMiniApp) {
+                // Режим Telegram Mini App
+                console.log('Запуск в Telegram Mini App');
                 
-                const getTelegramUser = () => {
-                    return new Promise((resolve) => {
-                        if (webApp.initDataUnsafe?.user) {
-                            resolve(webApp.initDataUnsafe.user);
-                            return;
-                        }
-                        
-                        let checkInterval = setInterval(() => {
-                            if (webApp.initDataUnsafe?.user) {
-                                clearInterval(checkInterval);
-                                resolve(webApp.initDataUnsafe.user);
-                            }
-                        }, 50);
-                        
-                        setTimeout(() => {
-                            clearInterval(checkInterval);
-                            resolve(null);
-                        }, 3000);
-                    });
-                };
+                // Ждём данные пользователя
+                let userData = null;
+                let attempts = 0;
+                const maxAttempts = 20;
                 
-                telegramUser = await getTelegramUser();
+                while (!userData && attempts < maxAttempts) {
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+                        userData = window.Telegram.WebApp.initDataUnsafe.user;
+                        if (userData) break;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
                 
-                if (telegramUser) {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                }
+                
+                if (userData) {
+                    console.log('Пользователь получен:', userData);
+                    telegramUser = {
+                        id: userData.id,
+                        first_name: userData.first_name,
+                        last_name: userData.last_name || '',
+                        username: userData.username,
+                        photo_url: userData.photo_url
+                    };
+                    
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
                     if (telegramUser.photo_url) {
                         setAvatar(telegramUser.photo_url, 'userAvatar');
@@ -1036,13 +1049,12 @@
                         loadSavedTheme();
                     }
                 } else {
-                    showAuthPage();
+                    console.error('Не удалось получить данные пользователя');
+                    document.getElementById('loadingSpinner').innerHTML = '❌ Не удалось получить данные пользователя. Перезапустите приложение.';
                 }
-                
-                webApp.ready();
-                webApp.expand();
             } else {
                 // Режим обычного браузера
+                console.log('Запуск в браузере');
                 const savedUser = getSavedTelegramUser();
                 
                 if (savedUser) {
