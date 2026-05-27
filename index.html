@@ -411,6 +411,14 @@
             color: var(--text-rank);
         }
         
+        .dots {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+        
         body.dark .warning-note {
             background: #3A3A4A;
             color: #FFD700;
@@ -583,6 +591,49 @@
         .mode-btn:hover {
             transform: scale(1.02);
         }
+        
+        /* Стили для пароля */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .password-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            width: 300px;
+            text-align: center;
+        }
+        .password-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .password-card input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+        .password-card button {
+            width: 100%;
+        }
+        .password-error {
+            color: #DC143C;
+            font-size: 12px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -666,7 +717,7 @@
     <div id="mainApp" class="container hidden">
         <div class="mode-switch">
             <button class="mode-btn active" onclick="switchMode('user')">📊 Рейтинг</button>
-            <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')" style="display: none;">🔧 Админ-панель</button>
+            <button class="mode-btn" id="adminModeBtn" onclick="requestAdminAccess()" style="display: none;">🔧 Админ-панель</button>
         </div>
         <div class="card">
             <div class="header">
@@ -827,6 +878,9 @@
         let telegramUser = null;
         let currentUser = null;
         let csvData = [];
+        let isAdminAuthenticated = false;
+
+        const ADMIN_PASSWORD = 'mosrobotics2026';
 
         function setAvatar(photoUrl, elementId) {
             const avatarElement = document.getElementById(elementId);
@@ -950,7 +1004,48 @@
             loadSavedTheme();
         }
 
+        function requestAdminAccess() {
+            if (isAdminAuthenticated) {
+                switchMode('admin');
+                return;
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'password-overlay';
+            overlay.id = 'passwordOverlay';
+            overlay.innerHTML = `
+                <div class="password-card">
+                    <h3>🔐 Доступ к админ-панели</h3>
+                    <input type="password" id="adminPasswordInput" placeholder="Введите пароль">
+                    <button class="refresh-btn" onclick="checkAdminPassword()">Войти</button>
+                    <div id="passwordError" class="password-error hidden"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPasswordInput').value;
+            const errorDiv = document.getElementById('passwordError');
+            
+            if (password === ADMIN_PASSWORD) {
+                isAdminAuthenticated = true;
+                closePasswordOverlay();
+                switchMode('admin');
+            } else {
+                errorDiv.textContent = 'Неверный пароль';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+        
+        function closePasswordOverlay() {
+            const overlay = document.getElementById('passwordOverlay');
+            if (overlay) overlay.remove();
+        }
+        
         function switchMode(mode) {
+            closePasswordOverlay();
+            
             const userModeBtn = document.querySelectorAll('.mode-btn')[0];
             const adminModeBtn = document.getElementById('adminModeBtn');
             
@@ -963,6 +1058,10 @@
                 if (adminModeBtn) adminModeBtn.classList.remove('active');
                 loadData();
             } else if (mode === 'admin') {
+                if (!isAdminAuthenticated) {
+                    requestAdminAccess();
+                    return;
+                }
                 document.getElementById('mainApp').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
                 document.getElementById('registrationForm').classList.add('hidden');
@@ -1153,14 +1252,32 @@
                         return { name: displayName, score: userScores[u.id] || 0, id: u.id };
                     }).sort((a, b) => b.score - a.score);
                     
-                    const topHtml = ranking.slice(0, 10).map((u, idx) => {
+                    const userRank = ranking.findIndex(u => u.id === currentUser.id) + 1;
+                    document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
+                    
+                    let topHtml = '';
+                    const top5 = ranking.slice(0, 5);
+                    
+                    top5.forEach((u, idx) => {
                         const rankText = `${idx + 1}.`;
-                        return `<div class="result-item" style="${u.id === currentUser?.id ? 'background: rgba(220,20,60,0.1);' : ''}"><div><span class="rank-number">${rankText}</span> <span style="color: var(--text-primary);">${u.name}</span></div><div style="font-weight: bold; color: #DC143C;">${u.score} б</div></div>`;
-                    }).join('');
+                        topHtml += `<div class="result-item" style="${u.id === currentUser.id ? 'background: rgba(220,20,60,0.1);' : ''}">
+                            <div><span class="rank-number">${rankText}</span> <span style="color: var(--text-primary);">${u.name}</span></div>
+                            <div style="font-weight: bold; color: #DC143C;">${u.score} б</div>
+                        </div>`;
+                    });
+                    
+                    if (userRank > 5 && ranking[userRank - 1]) {
+                        topHtml += `<div class="dots">⋯</div>`;
+                        const user = ranking[userRank - 1];
+                        topHtml += `<div class="result-item" style="background: rgba(220,20,60,0.1);">
+                            <div><span class="rank-number">${userRank}.</span> <span style="color: var(--text-primary);">${user.name}</span></div>
+                            <div style="font-weight: bold; color: #DC143C;">${user.score} б</div>
+                        </div>`;
+                    } else if (userRank <= 5 && ranking[5]) {
+                        topHtml += `<div class="dots">⋯</div>`;
+                    }
                     
                     document.getElementById('topList').innerHTML = topHtml || '<div class="info-note">Нет данных</div>';
-                    const userRank = ranking.findIndex(u => u.id === currentUser?.id) + 1;
-                    if (userRank > 0) document.getElementById('globalRank').innerHTML = `Место: ${userRank} из ${ranking.length}`;
                 }
             } catch (err) {
                 console.error('Ошибка загрузки:', err);
@@ -1182,7 +1299,8 @@
                 <div class="result-item"><div><span class="rank-number">1.</span> <span style="color: var(--text-primary);">Алексей С. 🥇</span></div><div style="font-weight: bold; color: #DC143C;">3150 б</div></div>
                 <div class="result-item"><div><span class="rank-number">2.</span> <span style="color: var(--text-primary);">Мария К. 🥈</span></div><div style="font-weight: bold; color: #DC143C;">2890 б</div></div>
                 <div class="result-item" style="background: rgba(220,20,60,0.1);"><div><span class="rank-number">3.</span> <span style="color: var(--text-primary);">Вы 🥉</span></div><div style="font-weight: bold; color: #DC143C;">2450 б</div></div>
-                <div class="result-item"><div><span class="rank-number">4.</span> <span style="color: var(--text-primary);">Дмитрий В.</span></div><div style="font-weight: bold; color: #DC143C;">2100 б</div></div>
+                <div class="dots">⋯</div>
+                <div class="result-item"><div><span class="rank-number">10.</span> <span style="color: var(--text-primary);">Сергей Ч.</span></div><div style="font-weight: bold; color: #DC143C;">500 б</div></div>
             `;
         }
 
@@ -1276,9 +1394,9 @@
                     if (previewRows.length < 5) previewRows.push(row);
                 }
                 
-                let previewHtml = '<table><thead><tr>';
+                let previewHtml = '<tr><thead><tr>';
                 headers.forEach(h => previewHtml += `<th>${h}</th>`);
-                previewHtml += '</tr></thead><tbody>';
+                previewHtml += '</thead><tbody>';
                 previewRows.forEach(row => {
                     previewHtml += '<tr>';
                     headers.forEach(h => previewHtml += `<td>${row[h] || '-'}</td>`);
