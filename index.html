@@ -647,14 +647,6 @@
         let telegramUser = null;
         let currentUser = null;
 
-        // ПРОСТАЯ И ГАРАНТИРОВАННАЯ ПРОВЕРКА - через URL параметр
-        const urlParams = new URLSearchParams(window.location.search);
-        const isFromTelegram = urlParams.get('tgWebApp') !== null || 
-                                (window.Telegram && window.Telegram.WebApp) ||
-                                navigator.userAgent.toLowerCase().includes('telegram');
-        
-        console.log('isFromTelegram:', isFromTelegram);
-        
         function getSavedTelegramUser() {
             const saved = localStorage.getItem('telegram_user');
             if (saved) {
@@ -977,107 +969,89 @@
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
         }
 
-        // ========== ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ ==========
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
         window.onload = async function() {
             document.getElementById('consentLink').addEventListener('click', (e) => {
                 e.preventDefault();
                 alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
             });
             
-            // ПРОВЕРКА: если есть параметр tgWebApp в URL или открыто в Telegram
-            if (isFromTelegram) {
-                console.log('Запуск в Telegram Mini App');
+            // ПРОВЕРЯЕМ НАЛИЧИЕ TELEGRAM WEBAPP
+            const hasWebApp = window.Telegram && window.Telegram.WebApp;
+            
+            if (hasWebApp) {
+                console.log('=== TELEGRAM MINI APP MODE ===');
+                const webApp = window.Telegram.WebApp;
                 
                 // Получаем данные пользователя
                 let userData = null;
-                
-                // Пытаемся получить данные разными способами
-                if (window.Telegram && window.Telegram.WebApp) {
-                    const webApp = window.Telegram.WebApp;
+                let attempts = 0;
+                while (!userData && attempts < 20) {
                     if (webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
                         userData = webApp.initDataUnsafe.user;
-                        console.log('Данные получены через WebApp');
-                    } else {
-                        console.log('WebApp есть, но данных нет, ждём...');
-                        // Ждём 1 секунду
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        if (webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
-                            userData = webApp.initDataUnsafe.user;
-                            console.log('Данные получены после ожидания');
-                        }
+                        break;
                     }
-                    webApp.ready();
-                    webApp.expand();
+                    await new Promise(r => setTimeout(r, 100));
+                    attempts++;
                 }
                 
-                // Если данные не получены, показываем ошибку
-                if (!userData) {
-                    console.error('Не удалось получить данные пользователя');
-                    document.getElementById('loadingSpinner').innerHTML = '❌ Ошибка: не удалось получить данные. Пожалуйста, перезапустите приложение.';
-                    return;
-                }
-                
-                telegramUser = {
-                    id: userData.id,
-                    first_name: userData.first_name,
-                    last_name: userData.last_name || '',
-                    username: userData.username,
-                    photo_url: userData.photo_url
-                };
-                
-                document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
-                if (telegramUser.photo_url) {
-                    setAvatar(telegramUser.photo_url, 'userAvatar');
-                    setAvatar(telegramUser.photo_url, 'regAvatar');
-                    setAvatar(telegramUser.photo_url, 'editAvatar');
-                }
-                
-                const { data } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('telegram_id', telegramUser.id)
-                    .maybeSingle();
-                
-                if (data) {
-                    currentUser = data;
-                    showMainApp();
-                    const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
-                    document.getElementById('userName').innerText = fullName;
-                    document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
-                    document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
-                    await loadSavedTheme();
-                    loadData();
+                if (userData) {
+                    console.log('User data received:', userData);
+                    telegramUser = {
+                        id: userData.id,
+                        first_name: userData.first_name,
+                        last_name: userData.last_name || '',
+                        username: userData.username,
+                        photo_url: userData.photo_url
+                    };
+                    
+                    // Проверяем в базе данных
+                    const { data: userInDb } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('telegram_id', telegramUser.id)
+                        .maybeSingle();
+                    
+                    if (userInDb) {
+                        currentUser = userInDb;
+                        showMainApp();
+                        const fullName = `${currentUser.last_name} ${currentUser.first_name} ${currentUser.patronymic || ''}`.trim();
+                        document.getElementById('userName').innerText = fullName;
+                        document.getElementById('userPublicId').innerHTML = `${currentUser.public_id || `USR-${currentUser.id}`}`;
+                        document.getElementById('userExperience').innerHTML = calculateExperience(currentUser.start_date);
+                        await loadSavedTheme();
+                        loadData();
+                    } else {
+                        showRegistrationForm();
+                        loadSavedTheme();
+                    }
                 } else {
-                    showRegistrationForm();
-                    loadSavedTheme();
+                    console.error('No user data after waiting');
+                    document.getElementById('loadingSpinner').innerHTML = '❌ Не удалось получить данные пользователя. Пожалуйста, перезапустите приложение.';
                 }
+                
+                webApp.ready();
+                webApp.expand();
             } else {
                 // Браузерный режим
-                console.log('Запуск в браузере');
+                console.log('=== BROWSER MODE ===');
                 const savedUser = getSavedTelegramUser();
                 
                 if (savedUser) {
                     telegramUser = savedUser;
-                    document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${savedUser.first_name || ''} ${savedUser.last_name || ''}`;
-                    if (savedUser.photo_url) {
-                        setAvatar(savedUser.photo_url, 'userAvatar');
-                        setAvatar(savedUser.photo_url, 'regAvatar');
-                        setAvatar(savedUser.photo_url, 'editAvatar');
-                    }
-                    
-                    const { data } = await supabase
+                    const { data: userInDb } = await supabase
                         .from('users')
                         .select('*')
                         .eq('telegram_id', savedUser.id)
                         .maybeSingle();
                     
-                    if (data) {
-                        currentUser = data;
+                    if (userInDb) {
+                        currentUser = userInDb;
                         showMainApp();
-                        const fullName = `${data.last_name} ${data.first_name} ${data.patronymic || ''}`.trim();
+                        const fullName = `${currentUser.last_name} ${currentUser.first_name} ${currentUser.patronymic || ''}`.trim();
                         document.getElementById('userName').innerText = fullName;
-                        document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
-                        document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
+                        document.getElementById('userPublicId').innerHTML = `${currentUser.public_id || `USR-${currentUser.id}`}`;
+                        document.getElementById('userExperience').innerHTML = calculateExperience(currentUser.start_date);
                         await loadSavedTheme();
                         loadData();
                     } else {
