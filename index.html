@@ -727,6 +727,7 @@
                     <span class="experience" id="userExperience"></span>
                     <span class="user-id" id="userPublicId"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
+                    <span class="user-id" id="userUsername" style="display: none;"></span>
                 </div>
             </div>
             <div class="rating-box">
@@ -880,7 +881,7 @@
         let csvData = [];
         let isAdminAuthenticated = false;
 
-        const ADMIN_PASSWORD = 'slon4444';
+        const ADMIN_PASSWORD = 'mosrobotics2026';
 
         function setAvatar(photoUrl, elementId) {
             const avatarElement = document.getElementById(elementId);
@@ -1127,6 +1128,11 @@
                 document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
                 document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
                 
+                if (data.username) {
+                    document.getElementById('userUsername').innerHTML = `@${data.username}`;
+                    document.getElementById('userUsername').style.display = 'inline-block';
+                }
+                
                 if (data.public_id === 'USR-1') {
                     document.getElementById('adminModeBtn').style.display = 'block';
                 }
@@ -1147,6 +1153,8 @@
             const birthDate = document.getElementById('birthDate').value;
             const startDate = document.getElementById('startDate').value;
             const consent = document.getElementById('consentCheckbox').checked;
+            
+            const username = telegramUser?.username || null;
 
             if (!lastName || !firstName || !birthDate) {
                 alert('Пожалуйста, заполните фамилию, имя и дату рождения');
@@ -1166,6 +1174,7 @@
                 .from('users')
                 .insert([{
                     telegram_id: telegramUser.id,
+                    username: username,
                     last_name: lastName,
                     first_name: firstName,
                     patronymic: patronymic || null,
@@ -1192,6 +1201,11 @@
             document.getElementById('userName').innerText = fullName;
             document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
             document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
+            
+            if (data.username) {
+                document.getElementById('userUsername').innerHTML = `@${data.username}`;
+                document.getElementById('userUsername').style.display = 'inline-block';
+            }
             
             if (data.public_id === 'USR-1') {
                 document.getElementById('adminModeBtn').style.display = 'block';
@@ -1394,9 +1408,9 @@
                     if (previewRows.length < 5) previewRows.push(row);
                 }
                 
-                let previewHtml = '<tr><thead><tr>';
+                let previewHtml = '<table><thead><tr>';
                 headers.forEach(h => previewHtml += `<th>${h}</th>`);
-                previewHtml += '</thead><tbody>';
+                previewHtml += '</tr></thead><tbody>';
                 previewRows.forEach(row => {
                     previewHtml += '<tr>';
                     headers.forEach(h => previewHtml += `<td>${row[h] || '-'}</td>`);
