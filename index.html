@@ -1010,7 +1010,6 @@
                 document.getElementById('userPublicId').innerHTML = `${data.public_id || `USR-${data.id}`}`;
                 document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
                 
-                // Показываем кнопку админа только для USR-1
                 if (data.public_id === 'USR-1') {
                     document.getElementById('adminBtn').style.display = 'inline-block';
                 }
@@ -1186,13 +1185,19 @@
         }
         
         function closeAdminModal() {
-            document.getElementById('adminModal').classList.add('hidden');
-            document.getElementById('csvPreview').innerHTML = '';
-            document.getElementById('csvPreview').classList.add('hidden');
+            const modal = document.getElementById('adminModal');
+            if (modal) modal.classList.add('hidden');
+            const preview = document.getElementById('csvPreview');
+            if (preview) {
+                preview.innerHTML = '';
+                preview.classList.add('hidden');
+            }
             const uploadBtn = document.getElementById('csvUploadBtn');
             if (uploadBtn) uploadBtn.disabled = true;
             const fileInput = document.getElementById('csvFileInput');
             if (fileInput) fileInput.value = '';
+            const statusDiv = document.getElementById('adminStatus');
+            if (statusDiv) statusDiv.classList.add('hidden');
         }
         
         function switchTab(tab) {
@@ -1252,17 +1257,30 @@
                 return;
             }
             
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('olympiads')
-                .insert([{ name, year, points_1st, points_2nd, points_3rd, points_participation }]);
+                .insert([{ 
+                    name, 
+                    year, 
+                    points_1st, 
+                    points_2nd, 
+                    points_3rd, 
+                    points_participation 
+                }]);
             
             if (error) {
+                console.error('Ошибка Supabase:', error);
                 showAdminStatus('Ошибка: ' + error.message, 'error');
                 return;
             }
             
             showAdminStatus(`Олимпиада "${name}" добавлена!`, 'success');
             document.getElementById('newOlympiadName').value = '';
+            document.getElementById('newOlympiadYear').value = '2026';
+            document.getElementById('newOlympiadPoints1').value = '100';
+            document.getElementById('newOlympiadPoints2').value = '75';
+            document.getElementById('newOlympiadPoints3').value = '50';
+            document.getElementById('newOlympiadPointsPart').value = '25';
             loadOlympiadsForAdmin();
         }
         
@@ -1370,7 +1388,6 @@
                 document.getElementById('csvPreview').classList.add('hidden');
                 csvData = [];
                 
-                // Обновляем данные, если затронут текущий пользователь
                 if (currentUser) {
                     const { data: updatedUser } = await supabase
                         .from('users')
@@ -1396,7 +1413,6 @@
                 return;
             }
             
-            // Ищем пользователя по public_id или id
             let user_id = null;
             if (identifier.toString().startsWith('USR-')) {
                 const { data } = await supabase
