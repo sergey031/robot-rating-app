@@ -42,7 +42,46 @@
             transition: background 0.3s ease;
         }
         
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 600px; margin: 0 auto; position: relative; }
+        
+        .top-bar {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .theme-btn, .back-btn {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        
+        .back-btn {
+            border-radius: 30px;
+            width: auto;
+            padding: 0 16px;
+            font-size: 14px;
+            gap: 6px;
+        }
+        
+        .theme-btn:hover, .back-btn:hover {
+            transform: scale(1.05);
+        }
         
         .card {
             background: var(--card-bg);
@@ -58,9 +97,6 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #DC143C;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         
         .header h1 {
@@ -68,33 +104,16 @@
             color: var(--text-primary);
         }
         
-        .back-btn {
-            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-        }
-        
-        .back-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 2px 8px rgba(220,20,60,0.3);
-        }
-        
         .section-title {
             font-size: 18px;
             font-weight: bold;
             color: var(--text-primary);
-            margin: 20px 0 15px;
+            margin: 0 0 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #DC143C;
         }
         
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -125,6 +144,40 @@
             font-size: 14px;
             color: var(--text-secondary);
             margin-bottom: 5px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .tab-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .refresh-btn {
@@ -213,42 +266,29 @@
         
         .hidden { display: none; }
         
-        .theme-switch {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
+        .info-note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-align: center;
         }
         
-        .theme-btn {
-            background: var(--card-bg);
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 22px;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-primary);
-        }
-        
-        .theme-btn:hover {
-            transform: scale(1.05);
-        }
-        
-        body.dark .preview-area {
-            background: var(--result-bg);
+        body.dark .info-note {
+            background: #3A3A4A;
+            color: #FFD700;
         }
         
         body.dark .file-zone {
             background: var(--card-bg);
         }
         
-        .admin-only {
+        body.dark .preview-area {
+            background: var(--result-bg);
+        }
+        
+        .admin-warning {
             background: #fff3cd;
             color: #856404;
             padding: 10px;
@@ -257,37 +297,37 @@
             margin-bottom: 15px;
         }
         
-        body.dark .admin-only {
+        body.dark .admin-warning {
             background: #3A3A4A;
             color: #FFD700;
         }
     </style>
 </head>
 <body>
-    <div class="theme-switch">
-        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
-    </div>
-    
     <div class="container">
+        <div class="top-bar">
+            <a href="index.html" class="back-btn">← На главную</a>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        </div>
+        
         <div class="card">
             <div class="header">
                 <h1>🔧 Админ-панель</h1>
-                <a href="index.html" class="back-btn">← На главную</a>
             </div>
             
-            <div class="admin-only">
+            <div class="admin-warning">
                 ⚠️ Управление олимпиадами и результатами участников
             </div>
             
-            <!-- Вкладки -->
-            <div class="form-row" style="margin-bottom: 20px;">
-                <button class="refresh-btn" onclick="switchTab('olympiad')" style="margin: 0;" id="tabOlympiadBtn">📅 Олимпиады</button>
-                <button class="refresh-btn" onclick="switchTab('csv')" style="margin: 0;" id="tabCsvBtn">📤 CSV</button>
-                <button class="refresh-btn" onclick="switchTab('manual')" style="margin: 0;" id="tabManualBtn">✏️ Ручной</button>
+            <!-- Кнопки вкладок -->
+            <div class="tab-buttons">
+                <button class="tab-btn" onclick="switchTab('olympiad')">📅 Олимпиады</button>
+                <button class="tab-btn" onclick="switchTab('csv')">📤 CSV</button>
+                <button class="tab-btn" onclick="switchTab('manual')">✏️ Ручной</button>
             </div>
             
-            <!-- Вкладка: Добавить олимпиаду -->
-            <div id="tab-olympiad" class="tab-content">
+            <!-- Вкладка: Олимпиады -->
+            <div id="tab-olympiad" class="tab-content active">
                 <div class="section-title">➕ Добавить новую олимпиаду</div>
                 <div class="form-group">
                     <label>Название олимпиады</label>
@@ -319,15 +359,10 @@
                 </div>
                 <button class="refresh-btn" onclick="addOlympiad()">➕ Добавить олимпиаду</button>
                 <div id="statusOlympiad" class="status-message hidden"></div>
-                
-                <div class="section-title">📋 Список олимпиад</div>
-                <div id="olympiadsList" class="preview-area">
-                    <div class="info-note">Загрузка...</div>
-                </div>
             </div>
             
-            <!-- Вкладка: Загрузить CSV -->
-            <div id="tab-csv" class="tab-content hidden">
+            <!-- Вкладка: CSV -->
+            <div id="tab-csv" class="tab-content">
                 <div class="section-title">📤 Загрузка результатов из CSV</div>
                 <div class="form-group">
                     <label>Выберите олимпиаду</label>
@@ -344,8 +379,8 @@
                 <div id="statusCsv" class="status-message hidden"></div>
             </div>
             
-            <!-- Вкладка: Добавить результат вручную -->
-            <div id="tab-manual" class="tab-content hidden">
+            <!-- Вкладка: Ручное добавление -->
+            <div id="tab-manual" class="tab-content">
                 <div class="section-title">✏️ Добавить результат вручную</div>
                 <div class="form-group">
                     <label>Участник (Public ID или ID)</label>
@@ -384,7 +419,7 @@
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        let currentUser = null;
+        let currentTab = 'olympiad';
         
         function applyTheme(theme) {
             const body = document.body;
@@ -425,49 +460,23 @@
         }
         
         function switchTab(tab) {
+            currentTab = tab;
+            
             // Скрываем все вкладки
-            document.getElementById('tab-olympiad').classList.add('hidden');
-            document.getElementById('tab-csv').classList.add('hidden');
-            document.getElementById('tab-manual').classList.add('hidden');
+            document.getElementById('tab-olympiad').classList.remove('active');
+            document.getElementById('tab-csv').classList.remove('active');
+            document.getElementById('tab-manual').classList.remove('active');
             
             // Показываем выбранную
             if (tab === 'olympiad') {
-                document.getElementById('tab-olympiad').classList.remove('hidden');
-                loadOlympiadsList();
+                document.getElementById('tab-olympiad').classList.add('active');
             } else if (tab === 'csv') {
-                document.getElementById('tab-csv').classList.remove('hidden');
+                document.getElementById('tab-csv').classList.add('active');
                 loadOlympiadsForSelect();
             } else if (tab === 'manual') {
-                document.getElementById('tab-manual').classList.remove('hidden');
+                document.getElementById('tab-manual').classList.add('active');
                 loadOlympiadsForSelect();
             }
-        }
-        
-        async function loadOlympiadsList() {
-            const { data, error } = await supabase
-                .from('olympiads')
-                .select('id, name, year, points_1st, points_2nd, points_3rd, points_participation')
-                .order('year', { ascending: false });
-            
-            const container = document.getElementById('olympiadsList');
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<div class="info-note">Нет олимпиад</div>';
-                return;
-            }
-            
-            let html = '<table><tr><th>Название</th><th>Год</th><th>1 место</th><th>2 место</th><th>3 место</th><th>Участие</th></tr>';
-            data.forEach(ol => {
-                html += `<tr>
-                    <td>${ol.name}</td>
-                    <td>${ol.year}</td>
-                    <td>${ol.points_1st}</td>
-                    <td>${ol.points_2nd}</td>
-                    <td>${ol.points_3rd}</td>
-                    <td>${ol.points_participation}</td>
-                </tr>`;
-            });
-            html += '</table>';
-            container.innerHTML = html;
         }
         
         async function loadOlympiadsForSelect() {
@@ -476,24 +485,19 @@
                 .select('id, name, year')
                 .order('year', { ascending: false });
             
-            if (error) return;
+            if (error) {
+                console.error('Ошибка загрузки олимпиад:', error);
+                return;
+            }
             
             const csvSelect = document.getElementById('csvOlympiadId');
             const manualSelect = document.getElementById('manualOlympiadId');
             
-            if (csvSelect) {
-                csvSelect.innerHTML = '<option value="">-- Выберите олимпиаду --</option>';
-                data.forEach(ol => {
-                    csvSelect.innerHTML += `<option value="${ol.id}">${ol.name} (${ol.year})</option>`;
-                });
-            }
+            const options = '<option value="">-- Выберите олимпиаду --</option>' + 
+                (data || []).map(ol => `<option value="${ol.id}">${ol.name} (${ol.year})</option>`).join('');
             
-            if (manualSelect) {
-                manualSelect.innerHTML = '<option value="">-- Выберите олимпиаду --</option>';
-                data.forEach(ol => {
-                    manualSelect.innerHTML += `<option value="${ol.id}">${ol.name} (${ol.year})</option>`;
-                });
-            }
+            if (csvSelect) csvSelect.innerHTML = options;
+            if (manualSelect) manualSelect.innerHTML = options;
         }
         
         async function addOlympiad() {
@@ -514,6 +518,7 @@
                 .insert([{ name, year, points_1st, points_2nd, points_3rd, points_participation }]);
             
             if (error) {
+                console.error('Ошибка Supabase:', error);
                 showStatus('error', 'Ошибка: ' + error.message, 'statusOlympiad');
                 return;
             }
@@ -525,7 +530,6 @@
             document.getElementById('newOlympiadPoints2').value = '75';
             document.getElementById('newOlympiadPoints3').value = '50';
             document.getElementById('newOlympiadPointsPart').value = '25';
-            loadOlympiadsList();
             loadOlympiadsForSelect();
         }
         
@@ -553,9 +557,9 @@
                     if (previewRows.length < 5) previewRows.push(row);
                 }
                 
-                let previewHtml = '<table><thead><tr>';
+                let previewHtml = '<tr><thead><tr>';
                 headers.forEach(h => previewHtml += `<th>${h}</th>`);
-                previewHtml += '</tr></thead><tbody>';
+                previewHtml += '</thead><tbody>';
                 previewRows.forEach(row => {
                     previewHtml += '<tr>';
                     headers.forEach(h => previewHtml += `<td>${row[h] || '-'}</td>`);
@@ -684,8 +688,8 @@
         }
         
         async function checkAdminAccess() {
-            // Получаем данные пользователя из Telegram
             let telegramId = null;
+            
             if (window.Telegram && window.Telegram.WebApp) {
                 const webApp = window.Telegram.WebApp;
                 const user = webApp.initDataUnsafe?.user;
@@ -695,7 +699,6 @@
             }
             
             if (!telegramId) {
-                // Если не в Telegram, пробуем из localStorage
                 const savedUser = localStorage.getItem('telegram_user');
                 if (savedUser) {
                     try {
@@ -706,7 +709,7 @@
             }
             
             if (telegramId) {
-                const { data } = await supabase
+                const { data, error } = await supabase
                     .from('users')
                     .select('public_id')
                     .eq('telegram_id', telegramId)
@@ -717,21 +720,16 @@
                 }
             }
             
-            // Если не админ — перенаправляем на главную
             window.location.href = 'index.html';
             return false;
         }
         
-        // Инициализация
         window.onload = async function() {
             loadSavedTheme();
             const isAdmin = await checkAdminAccess();
             if (!isAdmin) return;
             
-            loadOlympiadsList();
-            loadOlympiadsForSelect();
-            
-            // Активируем первую вкладку
+            await loadOlympiadsForSelect();
             switchTab('olympiad');
         };
     </script>
