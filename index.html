@@ -6,6 +6,7 @@
     <title>Московская робототехника | Рейтинг</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Все твои стили остаются без изменений */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
@@ -398,7 +399,6 @@
             color: var(--text-rank);
         }
         
-        /* Кнопка выхода */
         .logout-btn {
             background: none;
             border: 1px solid var(--border-color);
@@ -464,7 +464,6 @@
             background: #DC143C20;
         }
         
-        /* Стили для страницы авторизации */
         .telegram-login {
             display: flex;
             justify-content: center;
@@ -649,8 +648,6 @@
         let telegramUser = null;
         let currentUser = null;
 
-        // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
-        
         function isTelegramWebApp() {
             return window.Telegram && window.Telegram.WebApp;
         }
@@ -661,7 +658,6 @@
                 try {
                     const user = JSON.parse(saved);
                     const authDate = localStorage.getItem('telegram_auth_date');
-                    // Проверяем, что авторизация не старше 7 дней
                     if (authDate && (Date.now() / 1000 - parseInt(authDate) < 7 * 24 * 60 * 60)) {
                         return user;
                     }
@@ -681,8 +677,6 @@
             currentUser = null;
             showAuthPage();
         }
-        
-        // ========== ФУНКЦИИ ОТОБРАЖЕНИЯ СТРАНИЦ ==========
         
         function showAuthPage() {
             document.getElementById('loadingSpinner').classList.add('hidden');
@@ -707,8 +701,6 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('editProfileForm').classList.add('hidden');
         }
-        
-        // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (те же, что были) ==========
         
         function setAvatar(photoUrl, elementId) {
             const avatarElement = document.getElementById(elementId);
@@ -982,19 +974,39 @@
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
         }
 
-        // ========== ИНИЦИАЛИЗАЦИЯ ==========
-        
+        // ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ
         window.onload = async function() {
             document.getElementById('consentLink').addEventListener('click', (e) => {
                 e.preventDefault();
                 alert('Ваши персональные данные (ФИО, дата рождения, дата начала занятий) используются только для ведения рейтинга участников олимпиад по робототехнике. Данные не передаются третьим лицам. Результаты участия публикуются в общем рейтинге. Вы можете удалить свои данные, обратившись к организаторам.');
             });
             
-            // Проверяем, открыто ли приложение в Telegram Mini App
             if (isTelegramWebApp()) {
-                // Режим Telegram Mini App
+                // Режим Telegram Mini App — ждём данные пользователя
                 const webApp = window.Telegram.WebApp;
-                telegramUser = webApp.initDataUnsafe?.user;
+                
+                const getTelegramUser = () => {
+                    return new Promise((resolve) => {
+                        if (webApp.initDataUnsafe?.user) {
+                            resolve(webApp.initDataUnsafe.user);
+                            return;
+                        }
+                        
+                        let checkInterval = setInterval(() => {
+                            if (webApp.initDataUnsafe?.user) {
+                                clearInterval(checkInterval);
+                                resolve(webApp.initDataUnsafe.user);
+                            }
+                        }, 50);
+                        
+                        setTimeout(() => {
+                            clearInterval(checkInterval);
+                            resolve(null);
+                        }, 3000);
+                    });
+                };
+                
+                telegramUser = await getTelegramUser();
                 
                 if (telegramUser) {
                     document.getElementById('regTelegramId').innerHTML = `<strong>Telegram:</strong> ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`;
@@ -1004,7 +1016,6 @@
                         setAvatar(telegramUser.photo_url, 'editAvatar');
                     }
                     
-                    // Проверяем, зарегистрирован ли пользователь
                     const { data } = await supabase
                         .from('users')
                         .select('*')
