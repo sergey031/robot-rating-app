@@ -157,6 +157,24 @@
             background: linear-gradient(135deg, #DC143C20, #8B000020);
         }
         
+        .admin-link {
+            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .admin-link:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(220,20,60,0.3);
+        }
+        
         .rating-box {
             background: linear-gradient(135deg, var(--rating-bg-start) 0%, var(--rating-bg-end) 100%);
             color: var(--text-inverse);
@@ -201,22 +219,6 @@
         
         .edit-btn:hover {
             background: rgba(220,20,60,0.1);
-        }
-        
-        .admin-btn {
-            background: linear-gradient(135deg, #DC143C 0%, #B01030 100%);
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 14px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .admin-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 2px 8px rgba(220,20,60,0.3);
         }
         
         .result-item {
@@ -457,140 +459,6 @@
             background: #3A3A4A;
             color: var(--text-primary);
         }
-        
-        /* Админ-панель модальное окно */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #DC143C;
-        }
-        .modal-header h2 {
-            color: var(--text-primary);
-            margin: 0;
-        }
-        .modal-close {
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-        .modal-close:hover {
-            color: #DC143C;
-        }
-        .modal-tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 14px;
-            border-radius: 10px 10px 0 0;
-            transition: all 0.3s;
-        }
-        .tab-btn.active {
-            color: #DC143C;
-            border-bottom: 2px solid #DC143C;
-            background: rgba(220,20,60,0.1);
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-        }
-        .file-zone {
-            border: 2px dashed var(--border-color);
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-            transition: all 0.3s;
-        }
-        .file-zone:hover {
-            border-color: #DC143C;
-            background: rgba(220,20,60,0.05);
-        }
-        .preview-area {
-            background: var(--result-bg);
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            overflow-x: auto;
-            max-height: 200px;
-        }
-        .preview-area table {
-            width: 100%;
-            font-size: 11px;
-            border-collapse: collapse;
-        }
-        .preview-area th, .preview-area td {
-            padding: 4px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .status-message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-message.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        body.dark .file-zone {
-            background: var(--card-bg);
-        }
-        body.dark .preview-area {
-            background: var(--result-bg);
-        }
     </style>
 </head>
 <body>
@@ -687,7 +555,7 @@
                     <span class="experience" id="userExperience"></span>
                     <span class="user-id" id="userPublicId"></span>
                     <span class="participations" id="participationsCount">📊 Event: --</span>
-                    <button class="admin-btn" id="adminBtn" onclick="openAdminModal()" style="display: none;">🔧 Админ</button>
+                    <a href="admin.html" class="admin-link" id="adminLink" style="display: none;">🔧 Панель управления</a>
                 </div>
             </div>
             <div class="rating-box">
@@ -720,101 +588,6 @@
             <a href="https://t.me/mosrobotics" target="_blank" class="channel-link">
                 📢 Официальный канал Mosrobotics
             </a>
-        </div>
-    </div>
-
-    <!-- Админ-панель (модальное окно) -->
-    <div id="adminModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔧 Админ-панель</h2>
-                <span class="modal-close" onclick="closeAdminModal()">&times;</span>
-            </div>
-            <div class="modal-tabs">
-                <button class="tab-btn active" onclick="switchTab('olympiad')">📅 Добавить олимпиаду</button>
-                <button class="tab-btn" onclick="switchTab('csv')">📤 Загрузить CSV</button>
-                <button class="tab-btn" onclick="switchTab('manual')">✏️ Добавить результат</button>
-            </div>
-            
-            <!-- Вкладка: Добавить олимпиаду -->
-            <div id="tab-olympiad" class="tab-content active">
-                <div class="form-group">
-                    <label>Название олимпиады</label>
-                    <input type="text" id="newOlympiadName" class="form-input" placeholder="Например: Робофест-2026">
-                </div>
-                <div class="form-group">
-                    <label>Год проведения</label>
-                    <input type="number" id="newOlympiadYear" class="form-input" placeholder="2026" value="2026">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Баллы за 1 место</label>
-                        <input type="number" id="newOlympiadPoints1" class="form-input" value="100">
-                    </div>
-                    <div class="form-group">
-                        <label>Баллы за 2 место</label>
-                        <input type="number" id="newOlympiadPoints2" class="form-input" value="75">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Баллы за 3 место</label>
-                        <input type="number" id="newOlympiadPoints3" class="form-input" value="50">
-                    </div>
-                    <div class="form-group">
-                        <label>Баллы за участие</label>
-                        <input type="number" id="newOlympiadPointsPart" class="form-input" value="25">
-                    </div>
-                </div>
-                <button class="refresh-btn" onclick="addOlympiad()">➕ Добавить олимпиаду</button>
-                <div id="adminStatus" class="status-message hidden"></div>
-            </div>
-            
-            <!-- Вкладка: Загрузить CSV -->
-            <div id="tab-csv" class="tab-content">
-                <div class="form-group">
-                    <label>Выберите олимпиаду</label>
-                    <select id="csvOlympiadId" class="form-input">
-                        <option value="">-- Загрузка --</option>
-                    </select>
-                </div>
-                <div class="file-zone" onclick="document.getElementById('csvFileInput').click()">
-                    📁 Нажмите или перетащите CSV файл
-                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="previewCSV()">
-                </div>
-                <div id="csvPreview" class="preview-area hidden"></div>
-                <button id="csvUploadBtn" class="refresh-btn" onclick="uploadCSV()" disabled>📤 Загрузить в базу</button>
-            </div>
-            
-            <!-- Вкладка: Добавить результат вручную -->
-            <div id="tab-manual" class="tab-content">
-                <div class="form-group">
-                    <label>Участник (Public ID или ID)</label>
-                    <input type="text" id="manualUserIdentifier" class="form-input" placeholder="Например: USR-1 или 1">
-                </div>
-                <div class="form-group">
-                    <label>Олимпиада</label>
-                    <select id="manualOlympiadId" class="form-input">
-                        <option value="">-- Выберите олимпиаду --</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Место</label>
-                        <select id="manualPlace" class="form-input">
-                            <option value="1">🥇 1 место</option>
-                            <option value="2">🥈 2 место</option>
-                            <option value="3">🥉 3 место</option>
-                            <option value="participation">📋 Участие</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Баллы</label>
-                        <input type="number" id="manualPoints" class="form-input" placeholder="Баллы">
-                    </div>
-                </div>
-                <button class="refresh-btn" onclick="addManualResult()">✏️ Добавить результат</button>
-            </div>
         </div>
     </div>
 
@@ -1011,7 +784,7 @@
                 document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
                 
                 if (data.public_id === 'USR-1') {
-                    document.getElementById('adminBtn').style.display = 'inline-block';
+                    document.getElementById('adminLink').style.display = 'inline-block';
                 }
                 
                 await loadSavedTheme();
@@ -1077,7 +850,7 @@
             document.getElementById('userExperience').innerHTML = calculateExperience(data.start_date);
             
             if (data.public_id === 'USR-1') {
-                document.getElementById('adminBtn').style.display = 'inline-block';
+                document.getElementById('adminLink').style.display = 'inline-block';
             }
             
             await loadSavedTheme();
@@ -1171,299 +944,6 @@
         function showError(msg) {
             document.getElementById('resultsList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
             document.getElementById('topList').innerHTML = `<div class="info-note error">❌ ${msg}</div>`;
-        }
-
-        // ========== АДМИН-ПАНЕЛЬ ==========
-        
-        function openAdminModal() {
-            if (!currentUser || currentUser.public_id !== 'USR-1') {
-                showError('Доступ только для администратора');
-                return;
-            }
-            loadOlympiadsForAdmin();
-            document.getElementById('adminModal').classList.remove('hidden');
-        }
-        
-        function closeAdminModal() {
-            const modal = document.getElementById('adminModal');
-            if (modal) modal.classList.add('hidden');
-            const preview = document.getElementById('csvPreview');
-            if (preview) {
-                preview.innerHTML = '';
-                preview.classList.add('hidden');
-            }
-            const uploadBtn = document.getElementById('csvUploadBtn');
-            if (uploadBtn) uploadBtn.disabled = true;
-            const fileInput = document.getElementById('csvFileInput');
-            if (fileInput) fileInput.value = '';
-            const statusDiv = document.getElementById('adminStatus');
-            if (statusDiv) statusDiv.classList.add('hidden');
-        }
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            if (tab === 'olympiad') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById('tab-olympiad').classList.add('active');
-            } else if (tab === 'csv') {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById('tab-csv').classList.add('active');
-                loadOlympiadsForAdmin();
-            } else if (tab === 'manual') {
-                document.querySelectorAll('.tab-btn')[2].classList.add('active');
-                document.getElementById('tab-manual').classList.add('active');
-                loadOlympiadsForAdmin();
-            }
-        }
-        
-        async function loadOlympiadsForAdmin() {
-            const { data, error } = await supabase
-                .from('olympiads')
-                .select('id, name, year')
-                .order('year', { ascending: false });
-            
-            if (error) return;
-            
-            const csvSelect = document.getElementById('csvOlympiadId');
-            const manualSelect = document.getElementById('manualOlympiadId');
-            
-            if (csvSelect) {
-                csvSelect.innerHTML = '<option value="">-- Выберите олимпиаду --</option>';
-                data.forEach(ol => {
-                    csvSelect.innerHTML += `<option value="${ol.id}">${ol.name} (${ol.year})</option>`;
-                });
-            }
-            
-            if (manualSelect) {
-                manualSelect.innerHTML = '<option value="">-- Выберите олимпиаду --</option>';
-                data.forEach(ol => {
-                    manualSelect.innerHTML += `<option value="${ol.id}">${ol.name} (${ol.year})</option>`;
-                });
-            }
-        }
-        
-        async function addOlympiad() {
-            const name = document.getElementById('newOlympiadName').value.trim();
-            const year = parseInt(document.getElementById('newOlympiadYear').value);
-            const points_1st = parseInt(document.getElementById('newOlympiadPoints1').value);
-            const points_2nd = parseInt(document.getElementById('newOlympiadPoints2').value);
-            const points_3rd = parseInt(document.getElementById('newOlympiadPoints3').value);
-            const points_participation = parseInt(document.getElementById('newOlympiadPointsPart').value);
-            
-            if (!name || !year) {
-                showAdminStatus('Заполните название и год', 'error');
-                return;
-            }
-            
-            const { data, error } = await supabase
-                .from('olympiads')
-                .insert([{ 
-                    name, 
-                    year, 
-                    points_1st, 
-                    points_2nd, 
-                    points_3rd, 
-                    points_participation 
-                }]);
-            
-            if (error) {
-                console.error('Ошибка Supabase:', error);
-                showAdminStatus('Ошибка: ' + error.message, 'error');
-                return;
-            }
-            
-            showAdminStatus(`Олимпиада "${name}" добавлена!`, 'success');
-            document.getElementById('newOlympiadName').value = '';
-            document.getElementById('newOlympiadYear').value = '2026';
-            document.getElementById('newOlympiadPoints1').value = '100';
-            document.getElementById('newOlympiadPoints2').value = '75';
-            document.getElementById('newOlympiadPoints3').value = '50';
-            document.getElementById('newOlympiadPointsPart').value = '25';
-            loadOlympiadsForAdmin();
-        }
-        
-        let csvData = [];
-        
-        function previewCSV() {
-            const file = document.getElementById('csvFileInput').files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                const lines = content.split('\n');
-                const headers = lines[0].split(',').map(h => h.trim());
-                
-                csvData = [];
-                const previewRows = [];
-                
-                for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') continue;
-                    const values = lines[i].split(',');
-                    const row = {};
-                    headers.forEach((h, idx) => row[h] = values[idx]?.trim());
-                    csvData.push(row);
-                    if (previewRows.length < 5) previewRows.push(row);
-                }
-                
-                let previewHtml = '<table><thead><tr>';
-                headers.forEach(h => previewHtml += `<th>${h}</th>`);
-                previewHtml += '</tr></thead><tbody>';
-                previewRows.forEach(row => {
-                    previewHtml += '<tr>';
-                    headers.forEach(h => previewHtml += `<td>${row[h] || '-'}</td>`);
-                    previewHtml += '</tr>';
-                });
-                if (csvData.length > 5) {
-                    previewHtml += `<tr><td colspan="${headers.length}">... и ещё ${csvData.length - 5} записей</td></tr>`;
-                }
-                previewHtml += '</tbody></table>';
-                
-                document.getElementById('csvPreview').innerHTML = previewHtml;
-                document.getElementById('csvPreview').classList.remove('hidden');
-                document.getElementById('csvUploadBtn').disabled = false;
-            };
-            reader.readAsText(file, 'UTF-8');
-        }
-        
-        async function uploadCSV() {
-            const olympiadId = document.getElementById('csvOlympiadId').value;
-            if (!olympiadId) {
-                showAdminStatus('Выберите олимпиаду', 'error');
-                return;
-            }
-            
-            if (csvData.length === 0) {
-                showAdminStatus('Нет данных', 'error');
-                return;
-            }
-            
-            const uploadBtn = document.getElementById('csvUploadBtn');
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = '⏳ Загрузка...';
-            
-            let successCount = 0;
-            let errorCount = 0;
-            
-            for (const row of csvData) {
-                let user_id = row.user_id || row.userId || row.id;
-                if (user_id && isNaN(user_id) && user_id.toString().startsWith('USR-')) {
-                    const num = user_id.replace('USR-', '');
-                    user_id = parseInt(num);
-                } else {
-                    user_id = parseInt(user_id);
-                }
-                
-                const place = row.place || row.место || 'participation';
-                const points = parseInt(row.points || row.баллы || 0);
-                
-                if (isNaN(user_id) || isNaN(points)) {
-                    errorCount++;
-                    continue;
-                }
-                
-                const { error } = await supabase
-                    .from('results')
-                    .insert([{
-                        user_id: user_id,
-                        olympiad_id: parseInt(olympiadId),
-                        place: place,
-                        points: points,
-                        awarded_at: new Date().toISOString()
-                    }]);
-                
-                if (error) errorCount++;
-                else successCount++;
-            }
-            
-            showAdminStatus(`✅ Загружено: ${successCount} | ❌ Ошибок: ${errorCount}`, successCount > 0 ? 'success' : 'error');
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = '📤 Загрузить в базу';
-            
-            if (successCount > 0) {
-                document.getElementById('csvFileInput').value = '';
-                document.getElementById('csvPreview').innerHTML = '';
-                document.getElementById('csvPreview').classList.add('hidden');
-                csvData = [];
-                
-                if (currentUser) {
-                    const { data: updatedUser } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single();
-                    if (updatedUser) {
-                        currentUser = updatedUser;
-                        loadData();
-                    }
-                }
-            }
-        }
-        
-        async function addManualResult() {
-            const identifier = document.getElementById('manualUserIdentifier').value.trim();
-            const olympiadId = document.getElementById('manualOlympiadId').value;
-            const place = document.getElementById('manualPlace').value;
-            const points = parseInt(document.getElementById('manualPoints').value);
-            
-            if (!identifier || !olympiadId || !points) {
-                showAdminStatus('Заполните все поля', 'error');
-                return;
-            }
-            
-            let user_id = null;
-            if (identifier.toString().startsWith('USR-')) {
-                const { data } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('public_id', identifier)
-                    .single();
-                if (data) user_id = data.id;
-            } else {
-                user_id = parseInt(identifier);
-            }
-            
-            if (!user_id) {
-                showAdminStatus('Пользователь не найден', 'error');
-                return;
-            }
-            
-            const { error } = await supabase
-                .from('results')
-                .insert([{
-                    user_id: user_id,
-                    olympiad_id: parseInt(olympiadId),
-                    place: place,
-                    points: points,
-                    awarded_at: new Date().toISOString()
-                }]);
-            
-            if (error) {
-                showAdminStatus('Ошибка: ' + error.message, 'error');
-                return;
-            }
-            
-            showAdminStatus('Результат добавлен!', 'success');
-            document.getElementById('manualUserIdentifier').value = '';
-            document.getElementById('manualPoints').value = '';
-            
-            if (currentUser && currentUser.id === user_id) {
-                loadData();
-            }
-        }
-        
-        function showAdminStatus(message, type) {
-            const statusDiv = document.getElementById('adminStatus');
-            if (statusDiv) {
-                statusDiv.textContent = message;
-                statusDiv.className = `status-message ${type}`;
-                statusDiv.classList.remove('hidden');
-                setTimeout(() => statusDiv.classList.add('hidden'), 4000);
-            } else {
-                alert(message);
-            }
         }
     </script>
 </body>
