@@ -53,23 +53,24 @@
         .container { max-width: 500px; margin: 0 auto; position: relative; }
         
         .theme-btn {
-            background: var(--card-bg);
+            background: rgba(0,0,0,0.3);
             border: none;
             border-radius: 30px;
-            padding: 8px 16px;
+            padding: 6px 12px;
             font-size: 14px;
             cursor: pointer;
-            box-shadow: var(--shadow);
             transition: transform 0.3s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            color: var(--text-primary);
+            color: white !important;
+            font-weight: 500;
         }
         
         .theme-btn:hover {
             transform: scale(1.02);
+            background: rgba(0,0,0,0.4);
         }
         
         .card {
@@ -681,7 +682,7 @@
                 <div class="rating-value" id="ratingValue">0</div>
                 <div class="rating-label">Текущий рейтинг</div>
                 <div style="margin-top: 10px; font-size: 14px;" id="globalRank">Место: --</div>
-                <button class="theme-btn" style="margin-top: 12px; background: rgba(255,255,255,0.2); box-shadow: none; width: auto; padding: 6px 12px; font-size: 14px; border-radius: 30px;" onclick="toggleTheme()" id="themeBtnInline">🌙 Тема</button>
+                <button class="theme-btn" style="margin-top: 12px;" onclick="toggleTheme()" id="themeBtnInline">🌙 Тема</button>
             </div>
         </div>
         
@@ -842,10 +843,10 @@
             
             if (theme === 'dark') {
                 body.classList.add('dark');
-                if (themeBtnInline) themeBtnInline.textContent = '☀️ Тема';
+                if (themeBtnInline) themeBtnInline.innerHTML = '☀️ Тема';
             } else {
                 body.classList.remove('dark');
-                if (themeBtnInline) themeBtnInline.textContent = '🌙 Тема';
+                if (themeBtnInline) themeBtnInline.innerHTML = '🌙 Тема';
             }
         }
         
